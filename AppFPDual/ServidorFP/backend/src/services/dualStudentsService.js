@@ -60,31 +60,12 @@ exports.addStudent = function (request, response) {
     // Insertar el archivo y los datos del estudiante en la base de datos
     const query = `INSERT INTO AuxiliarAlumno (emailColegio, dni, nombreCompleto, sexo, fechaNacimiento, nacionalidad, email, 
         telAlumno, carnetConducir, tieneCoche, numeroSS, domicilio, cp, localidad, idEspecialidad, preferencia1, preferencia2, 
-        preferencia3, idiomasNivel, cvEuropass, anexo2, tutorLegal, dniTutorLegal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        preferencia3, idiomasNivel, cvEuropass, anexo2, tutorLegal, dniTutorLegal) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
-        emailinstituto,
-        dniNie,
-        nombre,
-        sexo,
-        fechanacimiento,
-        nacionalidad,
-        email,
-        telalumno,
-        carnetconducir === "true",
-        disponibilidad === "true",
-        numeroSS,
-        domicilio,
-        cp,
-        localidad,
-        especialidad,
-        idpreferencia1,
-        idpreferencia2,
-        idpreferencia3,
-        idiomas,
-        cvData,
-        fileData,
-        nombreTutorLegal,
-        dniTutorLegal
+        emailinstituto, dniNie, nombre, sexo, fechanacimiento, nacionalidad, email, telalumno, carnetconducir === "true",
+        disponibilidad === "true", numeroSS, domicilio, cp, localidad, especialidad, idpreferencia1, idpreferencia2,
+        idpreferencia3, idiomas, cvData, fileData, nombreTutorLegal, dniTutorLegal
     ];
 
     connection.query(query, values, (error, results) => {
@@ -93,25 +74,39 @@ exports.addStudent = function (request, response) {
             return response.status(500).json({ error: 'Error al insertar el estudiante.' });
         }
 
-        const query = `SELECT e.nombreEsp AS nomEsp,
+        sendMail(request, request.body);
+
+        response.status(201).json("Estudiante añadido correctamente");
+    });
+};
+
+async function sendMail(request, datosEstudiante){
+    const {emailinstituto, dniNie, nombre, sexo, fechanacimiento, nacionalidad,
+            email, telalumno, carnetconducir, disponibilidad, idiomas,
+            numeroSS, domicilio, cp, localidad, especialidad,
+            idpreferencia1, idpreferencia2, idpreferencia3,
+            nombretutorlegal, dnitutorlegal} = datosEstudiante;
+
+    const query = `
+        SELECT e.nombreEsp AS nomEsp,
         (SELECT p1.preferencia FROM Preferencia p1 WHERE p1.idPreferencia = ?) AS nomPre1,
         (SELECT p2.preferencia FROM Preferencia p2 WHERE p2.idPreferencia = ?) AS nomPre2,
         (SELECT p3.preferencia FROM Preferencia p3 WHERE p3.idPreferencia = ?) AS nomPre3
         FROM Especialidad e
-        WHERE e.idEspecialidad = ?`;
+        WHERE e.idEspecialidad = ?
+    `;
 
-        const values = [idpreferencia1, idpreferencia2, idpreferencia3, especialidad];
+    const values = [idpreferencia1, idpreferencia2, idpreferencia3, especialidad];
 
+    return new Promise((resolve, reject) => {
         connection.query(query, values, (err, results) => {
             if (err) {
-                console.error('Error al obtener los nombres de preferencias o la especialidad:', err);
-                return response.status(500).json({ error: 'Error al obtener las preferencias o la especialidad.' });
+                return reject('Error al obtener las preferencias o la especialidad');
             }
 
-            console.log(results);
-            const {nomEsp, nomPre1, nomPre2, nomPre3} = results[0];
+            const { nomEsp, nomPre1, nomPre2, nomPre3 } = results[0];
 
-            const mailOptions = {
+            const mail = {
                 from: `"Salesianos Zaragoza" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: 'Confirmación de inscripción - DUAL',
@@ -143,36 +138,33 @@ exports.addStudent = function (request, response) {
                 </ul>
                 `,
                 attachments: [
-                {
-                    filename: "CV.pdf",
-                    path: request.files.cv[0].path,
-                },
-                {
-                    filename: "Anexo2.pdf",
-                    path: request.files.doc[0].path,
-                },
+                    {
+                        filename: "CV.pdf",
+                        path: request.files.cv[0].path,
+                    },
+                    {
+                        filename: "Anexo2.pdf",
+                        path: request.files.doc[0].path,
+                    },
                 ],
             };
-            transporter.sendMail(mailOptions, (err, info) => {
+
+            transporter.sendMail(mail, (err, info) => {
                 if (err) {
                     console.error('Error al enviar el correo:', err);
                 } else {
                     console.log('Correo enviado:', info.response);
                 }
-                // Eliminar los archivos temporales después de insertarlos en la base de datos
-                // y mandar el correo
-                if (request.files.doc) {
-                    fs.unlinkSync(request.files.doc[0].path);
-                    console.log('Anexo eliminado');
-                }
-                
-                if (request.files.cv) {
-                    fs.unlinkSync(request.files.cv[0].path);
-                    console.log('Cv eliminado');
-                }
-            });
 
+                try {
+                    if (request.files.doc) fs.unlinkSync(request.files.doc[0].path);
+                    if (request.files.cv) fs.unlinkSync(request.files.cv[0].path);
+                } catch (e) {
+                    console.warn('Error al eliminar archivos temporales:', e);
+                }
+
+                resolve();
+            });
         });
-        response.status(201).json("Estudiante añadido correctamente");
     });
-};
+}
