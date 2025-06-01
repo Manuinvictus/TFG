@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const LinkStudents = () => {
     const [requests, setRequests] = useState([]);

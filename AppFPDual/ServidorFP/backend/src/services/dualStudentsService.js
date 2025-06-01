@@ -40,13 +40,9 @@ exports.addStudent = function (request, response) {
         return response.status(400).json({ error: 'No se ha subido ningún cv.' });
     }
 
-    // Leer el archivo y convertirlo a un formato que puedas almacenar en la base de datos
+    // Leer los archivos y convertirlos a un formato que se pueda almacenar en la base de datos (blob)
     const fileData = fs.readFileSync(file.path);
     const cvData = fs.readFileSync(cv.path);
-
-    //Comprobamos campos opcionales
-    const nombreTutorLegal = nombretutorlegal || null;
-    const dniTutorLegal = dnitutorlegal || null;
 
     // Insertar el archivo y los datos del estudiante en la base de datos
     const query = `INSERT INTO AuxiliarAlumno (emailColegio, dni, nombreCompleto, sexo, fechaNacimiento, nacionalidad, email, 
@@ -56,7 +52,7 @@ exports.addStudent = function (request, response) {
     const values = [
         emailinstituto, dniNie, nombre, sexo, fechanacimiento, nacionalidad, email, telalumno, carnetconducir === "true",
         disponibilidad === "true", numeroSS, domicilio, cp, localidad, especialidad, idpreferencia1, idpreferencia2,
-        idpreferencia3, idiomas, cvData, fileData, nombreTutorLegal, dniTutorLegal
+        idpreferencia3, idiomas, cvData, fileData, nombretutorlegal || null, dnitutorlegal || null
     ];
 
     connection.query(query, values, (error, results) => {
@@ -72,12 +68,15 @@ exports.addStudent = function (request, response) {
 };
 
 function sendMail(request, datosEstudiante){
-    const {emailinstituto, dniNie, nombre, sexo, fechanacimiento, nacionalidad,
-            email, telalumno, carnetconducir, disponibilidad, idiomas,
-            numeroSS, domicilio, cp, localidad, especialidad,
-            idpreferencia1, idpreferencia2, idpreferencia3,
-            nombretutorlegal, dnitutorlegal} = datosEstudiante;
+    const {
+        emailinstituto, dniNie, nombre, sexo, fechanacimiento, nacionalidad,
+        email, telalumno, carnetconducir, disponibilidad, idiomas, numeroSS, 
+        domicilio, cp, localidad, especialidad, idpreferencia1, idpreferencia2,
+        idpreferencia3, nombretutorlegal, dnitutorlegal
+    } = datosEstudiante;
 
+    // De las preferencias y la especialidad recibo los ids, por lo que necesito recibir 
+    // los nombres para mandarlos en el correo.
     const query = `
         SELECT e.nombreEsp AS nomEsp,
         (SELECT p1.preferencia FROM Preferencia p1 WHERE p1.idPreferencia = ?) AS nomPre1,

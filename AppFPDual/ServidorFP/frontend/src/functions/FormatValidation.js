@@ -44,6 +44,9 @@ export function cifValido(cif) {
     let sumaPar = 0;
     let sumaImpar = 0;
     const numero = cif.substring(1, 8);
+    // A diferencia de en programación, que empezamos a contar en el 0,
+    // el algoritmo del CIF considera que la primera posición es la 1,
+    // de ahí que sumaPar y sumaImpar puedan parecer puestos al revés.
     for (let i = 0; i < numero.length; i++) {
         let n = parseInt(numero[i]);
         if (i % 2 === 0) {
@@ -59,6 +62,11 @@ export function cifValido(cif) {
     const letra = cif[0];
     const valorControl = cif[8];
     const valorCalculado = (10 - (total % 10)) % 10;
+    // En función del valor de la letra inicial del CIF, comprobaremos que la 
+    // octava posición del mismo (valorControl) tenga el mismo valor que el 
+    // número que hemos calculado, o que nuestro valor calculado corresponda
+    // a la posición de la letra de nuestro array "letras" ubicada en valorControl.
+    // En algunos casos ambas opciones pueden servir.
     if ('PQRSNW'.includes(letra)) {
         return valorControl === letras[valorCalculado];
     }

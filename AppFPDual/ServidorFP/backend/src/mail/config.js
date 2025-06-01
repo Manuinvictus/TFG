@@ -14,7 +14,7 @@ try {
         },
     });
 } catch (error) {
-    console.log("Error al conectar con la base de datos");
+    console.log("Error al crear la conexión con nodemailer");
 }
 
 module.exports = { transporter };

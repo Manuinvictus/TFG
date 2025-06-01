@@ -53,7 +53,6 @@ exports.addCompanyRequest = function (request, response) {
         }
 
         const specialitiesCodes = await recibirNombres(values.specialities);
-        console.log(specialitiesCodes);
         const convenioDocxPath = await editarConvenio(values, specialitiesCodes);
         const convenioPdfPath = await docxToPdf(convenioDocxPath);
 
@@ -63,6 +62,7 @@ exports.addCompanyRequest = function (request, response) {
     });
 };
 
+// De las especialidades tengo las ids, para el documento oficial quiero los códigos oficiales.
 async function recibirNombres(specialities){
     const array =JSON.parse(specialities);;
     const values = array[0];
@@ -77,20 +77,26 @@ async function recibirNombres(specialities){
                 console.error("Error al obtener los códigos de las especialidades:", err);
                 return reject(err);
             }
+            // En las promise no es return, es resolve.
             resolve(result);
         });
     });
 }
 
 async function editarConvenio(values, specialitiesCodes) {
-    // Ruta al archivo Word original
+    // Ruta la plantilla original del convenio
     const templatePath = path.join(__dirname, '..', '..', 'required_documents', 'CONVENIO_GENERAL_PLANTILLA.docx');
     
-    // Ruta donde se guardará el archivo editado
+    // Ruta donde se guardará el convenio editado
     const outputPath = path.join(__dirname, '..', '..', 'uploads', `CONVENIO_${values.razonSocial}_${new Date().getFullYear()}.docx`);
 
     try {
-        // Reemplazar marcadores en el Word
+        // Reemplazar marcadores del convenio
+        // Importante: Sin cmdDelimiter pillaría cualquier instancia de las palabras
+        // ubicadas dentro de data (cualquier instancia de "cargo", por ejemplo).
+        // cmdDelimiter permite que solo recoja las instancias de las palabras que
+        // se encuentren dentro de nuestros delimitadores escogidos (['<<', '>>'], 
+        // por ejemplo "<<cargo>>" si se reconocería).
         const buffer = await createReport({
             template: fs.readFileSync(templatePath),
             data: {
@@ -115,8 +121,8 @@ async function editarConvenio(values, specialitiesCodes) {
     }
 }
 
-
 function docxToPdf(docxPath) {
+    // Si no se envuelve en una Promise, el await no se efectuará y devolverá undefined
     return new Promise((resolve, reject) => {
         const libreOfficeCommand = `soffice --headless --convert-to pdf --outdir "${path.dirname(docxPath)}" "${docxPath}"`;
 
@@ -126,16 +132,17 @@ function docxToPdf(docxPath) {
                 return reject(error);
             }
 
+            //Cambiamos la terminacion del documento.
             const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
 
-            // Comprobar que el archivo .pdf existe antes de borrar el .docx
+            // Comprobar que el archivo .pdf existe antes de borrar el .docx.
             fs.access(pdfPath, fs.constants.F_OK, (err) => {
                 if (err) {
                     console.error('PDF no encontrado tras la conversión');
                     return reject(new Error('PDF no generado'));
                 }
 
-                // Eliminar el archivo .docx
+                // Eliminar el archivo .docx.
                 fs.unlink(docxPath, (unlinkErr) => {
                     if (unlinkErr) {
                         console.warn('No se pudo eliminar el archivo .docx:', unlinkErr.message);
@@ -172,3 +179,30 @@ async function mandarMail(values, convenioPath){
         }
     });
 }
+
+// INSERTAR EL CONVENIO FIRMADO POR UNA EMPRESA QUE QUIERE PARTICIPAR EN EL PROGRAMA DUAL.
+exports.addConvenio = function (request, response) {
+    //El id viene alterado para dificultar que se pueda acceder a la ruta 
+    const id = request.params.id / 23;
+    const convenio = request.file;
+
+    // Leer el archivo y convertirlo a un formato que se pueda almacenar en la base de datos (blob)
+    const convData = fs.readFileSync(convenio.path);
+
+    const values = [convData, id];
+
+    const query = `
+        UPDATE auxiliarempresa 
+        SET convenioDoc = (?) 
+        WHERE idAuxEmpresa = (?)
+    `;
+
+    connection.query(query, values, (error, results) => {
+            if (error) {
+                console.error('Error al actualizar la peticion:', error);
+                return response.status(500).json({ error: 'Error al actualizar la peticion.' });
+            }
+
+            response.status(201).json("Solicitud de empresa actualizada correctamente");
+        });
+};
