@@ -1,17 +1,8 @@
 require('dotenv').config();
 const { connection } = require("../db/config");
+const { transporter } = require("../mail/config");
 // Para gestionar los documentos
 const fs = require('fs');
-// Para enviar el correo electrónico
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-});
 
 // INSERTAR NUEVO PARTICIPANTE EN EL PROGRAMA DUAL
 exports.addStudent = function (request, response) {

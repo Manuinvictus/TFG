@@ -1,20 +1,11 @@
 const { connection } = require("../db/config");
+const { transporter } = require("../mail/config");
 const fs = require('fs');
 const path = require('path');
 // Para poder convertir a pdf los .docx
 const { exec } = require('child_process');
 // Para modificar la plantilla y crear los convenios.
 const { createReport } = require('docx-templates');
-// Para enviar el correo electrónico
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-});
 
 // INSERTAR NUEVA PETICIÓN DE ALUMNOS PARA EL PROGRAMA DUAL POR PARTE DE UNA EMPRESA
 exports.addCompanyRequest = function (request, response) {
@@ -26,10 +17,10 @@ exports.addCompanyRequest = function (request, response) {
         razonSocial,
         cif,
         telEmpresa,
-        dirRazSocial, // de aqui
+        dirRazSocial,
         provincia,
         municipio,
-        cpRazSoc, // a aqui juntar
+        cpRazSoc,
         responsableLegal,
         cargo,
         dniRl,
