@@ -40,7 +40,7 @@ exports.addCompanyRequest = function (request, response) {
         specialities
     } = request.body;
 
-    const sql = `
+    const query = `
     INSERT INTO AuxiliarEmpresa (dniCoordinador, emailCoordinador, nombreCoordinador, telefonoCoordinador,
                                 razonSocial, cif, telEmpresa, dirRazSocial, provincia, municipio, cpRazSoc,
                                 responsableLegal, cargo, dni, descripcionPuesto, direccionLugarTrabajo,
@@ -55,25 +55,43 @@ exports.addCompanyRequest = function (request, response) {
         metodosTransporte, fechaPeticion, specialities
     };
 
-    connection.query(sql, Object.values(values), async (err, result) => {
+    connection.query(query, Object.values(values), async (err, result) => {
         if (err) {
         console.error("Error al insertar la empresa:", err);
         return response.status(500).json({ error: "Error al guardar la empresa" });
         }
 
-        const convenioDocxPath = await editarConvenio(values);
+        const specialitiesCodes = await recibirNombres(values.specialities);
+        console.log(specialitiesCodes);
+        const convenioDocxPath = await editarConvenio(values, specialitiesCodes);
         const convenioPdfPath = await docxToPdf(convenioDocxPath);
 
         mandarMail(values, convenioPdfPath);
 
-        return response.status(200).json({
-            message: "Empresa guardada correctamente",
-            idAuxEmpresa: result.insertId
-        });
+        response.status(201).json("Solicitud de empresa añadida correctamente");
     });
 };
 
-async function editarConvenio(values) {
+async function recibirNombres(specialities){
+    const array =JSON.parse(specialities);;
+    const values = array[0];
+    const plantilla = values.map(() => '?').join(',');
+    const query = `
+    SELECT codigoEsp FROM especialidad WHERE idEspecialidad IN (${plantilla});
+    `;
+    // Si no se envuelve en una Promise, el await no se efectuará y devolverá undefined
+    return new Promise((resolve, reject) => {
+        connection.query(query, Object.values(values), (err, result) => {
+            if (err) {
+                console.error("Error al obtener los códigos de las especialidades:", err);
+                return reject(err);
+            }
+            resolve(result);
+        });
+    });
+}
+
+async function editarConvenio(values, specialitiesCodes) {
     // Ruta al archivo Word original
     const templatePath = path.join(__dirname, '..', '..', 'required_documents', 'CONVENIO_GENERAL_PLANTILLA.docx');
     
@@ -91,7 +109,7 @@ async function editarConvenio(values) {
                 dirRazSocial: values.dirRazSocial + ' ' + values.provincia + ' ' + values.municipio + ' ' + values.cpRazSoc,
                 cif: values.cif,
                 cargo: values.cargo,
-                specialities: values.specialities,
+                specialities: specialitiesCodes.map(e => e.codigoEsp).join(', '),
                 fechaPeticion: values.fechaPeticion,
             },
             cmdDelimiter: ['<<', '>>'],
