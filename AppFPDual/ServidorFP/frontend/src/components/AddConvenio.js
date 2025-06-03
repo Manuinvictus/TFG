@@ -7,8 +7,15 @@ function AddConvenio() {
     const [file, setFile] = useState(null);
 
     useEffect(() => {
-        if (id % 23 !== 0) {
+    const numero = id.slice(0, -1)
+    const letraControl = id.slice(-1);
+    const letras = 'QRBMUHPWACKZFJLVDXSYIGTNOE';
+        if (numero % 23 !== 0) {
             navigate('/home');
+        } else{
+            if (letraControl !== letras[(numero / 23) % 26]) {
+                navigate('/home');
+            }
         }
     }, [id, navigate]);
 

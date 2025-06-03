@@ -9,7 +9,6 @@ const AddCompanyRequest = () => {
   // Para cargar los posibles transportes 
   const [dataTransports, setDataTransports] = useState([]);
   // Campos form
-  const [dniCoordinador, setDniCoordinador] = useState('');
   const [emailCoordinador, setEmailCoordinador] = useState('');
   const [nombreCoordinador, setNombreCoordinador] = useState('');
   const [telefonoCoordinador, setTelefonoCoordinador] = useState('');
@@ -67,6 +66,8 @@ const AddCompanyRequest = () => {
       });
   }
 
+// -----------------------------------------------------------------   HANDLERS
+// 
   const handleTransportToggle = (id) => {
     const index = metodosTransporte.indexOf(id);
     if (index === -1) {
@@ -109,79 +110,70 @@ const AddCompanyRequest = () => {
     console.log(specialities);
   };
 
-  function handleDniCoordinadorChange(event) {
-    setDniCoordinador(event.target.value);
-  }
-  
   function handleEmailCoordinadorChange(event) {
     setEmailCoordinador(event.target.value);
   }
-  
+
   function handleNombreCoordinadorChange(event) {
     setNombreCoordinador(event.target.value);
   }
-  
+
   function handleTelefonoCoordinadorChange(event) {
     setTelefonoCoordinador(event.target.value);
   }
-  
+
   function handleRazonSocialChange(event) {
     setRazonSocial(event.target.value);
   }
-  
+
   function handleCifChange(event) {
     setCif(event.target.value);
   }
-  
+
   function handleTelEmpresaChange(event) {
     setTelEmpresa(event.target.value);
   }
-  
+
   function handleDirRazSocialChange(event) {
     setDirRazSocial(event.target.value);
   }
-  
+
   function handleProvinciaChange(event) {
     setProvincia(event.target.value);
   }
-  
+
   function handleMunicipioChange(event) {
     setMunicipio(event.target.value);
   }
-  
+
   function handleCpRazSocChange(event) {
     setCpRazSoc(event.target.value);
   }
-  
+
   function handleResponsableLegalChange(event) {
     setResponsableLegal(event.target.value);
   }
-  
+
   function handleCargoChange(event) {
     setCargo(event.target.value);
   }
-  
+
   function handleDniRlChange(event) {
     setDniRl(event.target.value);
   }
-  
+
   function handleDescripcionPuestoChange(event) {
     setDescripcionPuesto(event.target.value);
   }
-  
+
   function handleDireccionLugarTrabajoChange(event) {
     setDireccionLugarTrabajo(event.target.value);
   }
 
+// --------------------------------------------------------------------------  EJECUCIONES
   const buttonAddCompanyRequest = async () => {
     if (!formRef.current.checkValidity()) {
       formRef.current.reportValidity();
-      return;
-    }
-    if (!FormatValidation.dniNieValido(dniCoordinador)){
-      setSuccessMessage("Formato de DNI/NIE del coordinador no valido, porfavor revise el campo.");
-      await wait(5000);
-      setSuccessMessage(null);
       return;
     }
     if (!FormatValidation.dniNieValido(dniRl)){
@@ -216,7 +208,6 @@ const AddCompanyRequest = () => {
   const AddCompanyRequest = async () => {
     try {
       const data = new FormData();
-      data.append('dniCoordinador', dniCoordinador);
       data.append('emailCoordinador', emailCoordinador);
       data.append('nombreCoordinador', nombreCoordinador);
       data.append('telefonoCoordinador', telefonoCoordinador);
@@ -235,6 +226,7 @@ const AddCompanyRequest = () => {
       data.append('metodosTransporte', metodosTransporte);
       data.append('fechaPeticion', FormatValidation.validDate(new Date()));
       data.append('specialities', JSON.stringify(specialities));
+      data.append('url', window.location.origin);
 
       const options = {
         method: 'POST',
@@ -261,73 +253,99 @@ const AddCompanyRequest = () => {
   return (
     <div className="container mt-4">
       <form ref={formRef}>
-        <h4>AÑADIR PETICION:</h4>
-        <span className="mb-5">Esta petición no tiene ninguna vinculación legal, solo se hace para formalizar la documentación necesaria para poder desarrollar el programa de formación dual.</span>
+        <h4>DATOS CONVENIO EMPRESA COLABORADORA DUAL:</h4>
+        <span className="mb-5">
+          Esta petición no tiene ninguna vinculación legal, solo se hace para formalizar la documentación necesaria para poder 
+          desarrollar el programa de formación dual.
+        </span>
         <div className="row mt-3">
           <div className="col-md-6">
-            <div className="mb-3">
-              <label htmlFor="dniCoordinador-input" className="form-label">DNI Coordinador</label>
-              <input type="text" id="dniCoordinador-input" name="dniCoordinador" className="form-control" value={dniCoordinador} onChange={handleDniCoordinadorChange} pattern="[A-Z0-9]{9,10}" maxLength={10} required/>
+            <div className="mb-1">
+              <label htmlFor="emailCoordinador-input" className="form-label fw-bold fs-5">Email Coordinador:</label>
+              <div>
+                <span className="fw-bold text-decoration-underline">Muy importante.</span>- Este email deberá ser de la
+                <span className="fw-bold"> persona que recibirá todas las notificaciones y documentos</span> relacionadas 
+                con el desarrollo <span className="fw-bold">del proyecto DUAL.</span>
+              </div>
+              <input type="email" id="emailCoordinador-input" name="emailCoordinador" className="form-control" value={emailCoordinador}
+                      onChange={handleEmailCoordinadorChange} maxLength={60} required/>
             </div>
             <div className="mb-3">
-              <label htmlFor="emailCoordinador-input" className="form-label">Email Coordinador</label>
-              <input type="email" id="emailCoordinador-input" name="emailCoordinador" className="form-control" value={emailCoordinador} onChange={handleEmailCoordinadorChange} maxLength={60} required/>
+              <label htmlFor="telefonoCoordinador-input" className="form-label fw-bold fs-5">Teléfono Coordinador:</label>
+              <div>
+                <span className="fw-bold text-decoration-underline">Muy importante.</span>- Este <span className="fw-bold">teléfono </span> 
+                deberá ser de la <span className="fw-bold">persona que recibirá todas las notificaciones y documentos</span> relacionadas 
+                con el desarrollo <span className="fw-bold">del proyecto DUAL.</span>
+              </div>
+              <input type="text" id="telefonoCoordinador-input" name="telefonoCoordinador" className="form-control" 
+                      value={telefonoCoordinador} onChange={handleTelefonoCoordinadorChange} maxLength={9} required/>
             </div>
             <div className="mb-3">
-              <label htmlFor="nombreCoordinador-input" className="form-label">Nombre Coordinador</label>
-              <input type="text" id="nombreCoordinador-input" name="nombreCoordinador" className="form-control" value={nombreCoordinador} onChange={handleNombreCoordinadorChange} maxLength={45} required/>
+              <label htmlFor="razonSocial-input" className="form-label fw-bold fs-5">Razón Social:</label>
+              <input type="text" id="razonSocial-input" name="razonSocial" className="form-control" value={razonSocial} 
+                      onChange={handleRazonSocialChange} maxLength={60} required/>
             </div>
             <div className="mb-3">
-              <label htmlFor="telefonoCoordinador-input" className="form-label">Teléfono Coordinador</label>
-              <input type="text" id="telefonoCoordinador-input" name="telefonoCoordinador" className="form-control" value={telefonoCoordinador} onChange={handleTelefonoCoordinadorChange} maxLength={9} required/>
+              <label htmlFor="dirRazSocial-input" className="form-label fw-bold fs-5">Dirección Razón Social:</label>
+              <input type="text" id="dirRazSocial-input" name="dirRazSocial" className="form-control" value={dirRazSocial} 
+                      onChange={handleDirRazSocialChange} maxLength={100}/>
             </div>
             <div className="mb-3">
-              <label htmlFor="razonSocial-input" className="form-label">Razón Social</label>
-              <input type="text" id="razonSocial-input" name="razonSocial" className="form-control" value={razonSocial} onChange={handleRazonSocialChange} maxLength={60} required/>
+              <label htmlFor="municipio-input" className="form-label fw-bold fs-5">Municipio:</label>
+              <input type="text" id="municipio-input" name="municipio" className="form-control" value={municipio} 
+                      onChange={handleMunicipioChange} maxLength={40}/>
             </div>
             <div className="mb-3">
-              <label htmlFor="cif-input" className="form-label">CIF</label>
+              <label htmlFor="responsableLegal-input" className="form-label fw-bold fs-5">Responsable Legal:</label>
+              <input type="text" id="responsableLegal-input" name="responsableLegal" className="form-control" value={responsableLegal}
+                      onChange={handleResponsableLegalChange} maxLength={45}/>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="mb-5">
+              <label htmlFor="nombreCoordinador-input" className="form-label fw-bold fs-5">Nombre Coordinador:</label>
+              <div>
+                <span className="fw-bold text-decoration-underline">Muy importante.</span>- Esta persona deberá ser la
+                <span className="fw-bold"> que recibirá todas las notificaciones y documentos</span> relacionadas 
+                con el desarrollo <span className="fw-bold">del proyecto DUAL.</span>
+              </div>
+              <input type="text" id="nombreCoordinador-input" name="nombreCoordinador" className="form-control" value={nombreCoordinador} 
+                      onChange={handleNombreCoordinadorChange} maxLength={45} required/>
+            </div>
+            <div className="mb-3 mt-5">
+              <label htmlFor="telEmpresa-input" className="form-label fw-bold fs-5">Teléfono Empresa:</label>
+              <input type="text" id="telEmpresa-input" name="telEmpresa" className="form-control" value={telEmpresa} 
+                      onChange={handleTelEmpresaChange} maxLength={9}/>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="cif-input" className="form-label fw-bold fs-5">CIF:</label>
               <input type="text" id="cif-input" name="cif" className="form-control" value={cif} onChange={handleCifChange} maxLength={9} 
                       pattern="^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$" required/>
             </div>
             <div className="mb-3">
-              <label htmlFor="telEmpresa-input" className="form-label">Teléfono Empresa</label>
-              <input type="text" id="telEmpresa-input" name="telEmpresa" className="form-control" value={telEmpresa} onChange={handleTelEmpresaChange} maxLength={9}/>
+              <label htmlFor="provincia-input" className="form-label fw-bold fs-5">Provincia:</label>
+              <input type="text" id="provincia-input" name="provincia" className="form-control" value={provincia} 
+                      onChange={handleProvinciaChange} maxLength={40}/>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="cpRazSoc-input" className="form-label fw-bold fs-5">Código Postal Razón Social:</label>
+              <input type="text" id="cpRazSoc-input" name="cpRazSoc" className="form-control" value={cpRazSoc} 
+                      onChange={handleCpRazSocChange} maxLength={5}/>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="dniRl-input" className="form-label fw-bold fs-5">DNI Responsable:</label>
+              <input type="text" id="dniRl-input" name="dniRl" className="form-control" value={dniRl} onChange={handleDniRlChange} 
+                      pattern="[A-Z0-9]{9,10}" maxLength={10}/>
             </div>
           </div>
-          <div className="col-md-6">
+          <div className="col-12">
             <div className="mb-3">
-              <label htmlFor="dirRazSocial-input" className="form-label">Dirección Razón Social</label>
-              <input type="text" id="dirRazSocial-input" name="dirRazSocial" className="form-control" value={dirRazSocial} onChange={handleDirRazSocialChange} maxLength={100}/>
+              <label htmlFor="cargo-input" className="form-label fw-bold fs-5">Cargo:</label>
+              <input type="text" id="cargo-input" name="cargo" className="form-control" value={cargo} onChange={handleCargoChange} 
+                      maxLength={30}/>
             </div>
             <div className="mb-3">
-              <label htmlFor="provincia-input" className="form-label">Provincia</label>
-              <input type="text" id="provincia-input" name="provincia" className="form-control" value={provincia} onChange={handleProvinciaChange} maxLength={40}/>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="municipio-input" className="form-label">Municipio</label>
-              <input type="text" id="municipio-input" name="municipio" className="form-control" value={municipio} onChange={handleMunicipioChange} maxLength={40}/>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="cpRazSoc-input" className="form-label">CP Razón Social</label>
-              <input type="text" id="cpRazSoc-input" name="cpRazSoc" className="form-control" value={cpRazSoc} onChange={handleCpRazSocChange} maxLength={5}/>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="responsableLegal-input" className="form-label">Responsable Legal</label>
-              <input type="text" id="responsableLegal-input" name="responsableLegal" className="form-control" value={responsableLegal} onChange={handleResponsableLegalChange} maxLength={45}/>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="cargo-input" className="form-label">Cargo</label>
-              <input type="text" id="cargo-input" name="cargo" className="form-control" value={cargo} onChange={handleCargoChange} maxLength={30}/>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="dniRl-input" className="form-label">DNI Responsable</label>
-              <input type="text" id="dniRl-input" name="dniRl" className="form-control" value={dniRl} onChange={handleDniRlChange} pattern="[A-Z0-9]{9,10}" maxLength={10}/>
-            </div>
-          </div>
-          <div className="col-12 mt-3">
-            <div className="mb-3">
-              <label className="form-label fs-5">Ciclo(s) de Grado que se solicitan:</label>
+              <label className="form-label fw-bold fs-5">Ciclo(s) de Grado que se solicitan:</label>
               <div className="grid grid-cols-2 gap-2">
                 {dataSpecialities.map(speciality => (
                   <div key={speciality.idEspecialidad}
@@ -342,7 +360,7 @@ const AddCompanyRequest = () => {
                     </div>
                     {specialities[0]?.includes(speciality.idEspecialidad) && (
                       <div className="flex items-center space-x-2 ms-2">
-                        <label className="text-sm">Alumnos:</label>
+                        <label className="text-sm">Alumnos::</label>
                         <input type="number" className="form-control w-20" min="1"
                           value={specialities[1][specialities[0].indexOf(speciality.idEspecialidad)]}
                           onChange={(event) =>
@@ -356,15 +374,31 @@ const AddCompanyRequest = () => {
               </div>
             </div>
             <div className="mb-3">
-              <label htmlFor="descripcionPuesto-input" className="form-label">Descripción del Puesto</label>
-              <textarea id="descripcionPuesto-input" name="descripcionPuesto" className="form-control" value={descripcionPuesto} onChange={handleDescripcionPuestoChange} maxLength={500}/>
+              <label htmlFor="descripcionPuesto-input" className="form-label fw-bold fs-5">Descripción del Puesto:</label>
+              <div>
+                Indicar de manera aproximada las <span className="fw-bold">tareas que se le asignará</span> al estudiante de Dual.
+                Esta información nos ayuda a nosotros para realizar una <span className="fw-bold">mejor preselección de candidatos.</span>
+              </div>
+              <textarea id="descripcionPuesto-input" name="descripcionPuesto" className="form-control" value={descripcionPuesto} 
+                          onChange={handleDescripcionPuestoChange} maxLength={500}/>
             </div>
             <div className="mb-3">
-              <label htmlFor="direccionLugarTrabajo-input" className="form-label">Dirección Lugar de Trabajo</label>
-              <input type="text" id="direccionLugarTrabajo-input" name="direccionLugarTrabajo" className="form-control" value={direccionLugarTrabajo} onChange={handleDireccionLugarTrabajoChange} maxLength={100}/>
+              <label htmlFor="direccionLugarTrabajo-input" className="form-label fw-bold fs-5">Dirección Lugar de Trabajo:</label>
+              <div>
+                Indicar en que lugar desarrollara el alumno su trabajo. En el caso de que el trabajo
+                se desarrolle fuera de la sede de la empresa indicar el punto de encuentro. Esta
+                información nos ayuda a nosotros para poder hacer una mejor asignación de
+                candidatos.
+              </div>
+              <input type="text" id="direccionLugarTrabajo-input" name="direccionLugarTrabajo" className="form-control" 
+                      value={direccionLugarTrabajo} onChange={handleDireccionLugarTrabajoChange} maxLength={100}/>
             </div>
             <div className="mb-3">
-              <label className="form-label fs-5">Métodos de Transporte:</label>
+              <label className="form-label fw-bold fs-5">Métodos de Transporte:</label>
+              <div>
+                Indicar el/los medio de transporte posibles para que el alumno acuda al puesto de
+                trabajo. Esto nos ayuda a realizar una mejor preselección de candidatos.
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 {dataTransports.map(transport => (
                   <div key={transport.idTransporte}
@@ -390,7 +424,7 @@ const AddCompanyRequest = () => {
           </div>
         )}
       </form>
-      </div>
+    </div>
   );
 };
 

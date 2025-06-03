@@ -10,14 +10,14 @@ const LinkStudents = () => {
         LinkStudents();
     }, []);
 
-    // -----------------------------------------------------------------   GET ALLS
+    // -----------------------------------------------------------------   GETS
     // 
-    // Recoge todos los datos de la tabla especialidades y los guarda en dataSpecialities
+    // Recoge todos los datos de un join de tablas y los guarda en requests
     function LinkStudents() {
         fetch('/linkStudents') // Hacer una solicitud HTTP GET a '/linkStudents'
         .then(response => response.json()) // Convertir la respuesta a JSON
         .then(requests => {
-            setRequests(requests); // Establecer los datos obtenidos en el estado 'dataSpecialities'
+            setRequests(requests); // Establecer los datos obtenidos en el estado 'requests'
             console.log(requests); // Mostrar el contenido en la consola
         })
         .catch(error => {

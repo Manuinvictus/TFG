@@ -10,7 +10,6 @@ const { createReport } = require('docx-templates');
 // INSERTAR NUEVA PETICIÓN DE ALUMNOS PARA EL PROGRAMA DUAL POR PARTE DE UNA EMPRESA
 exports.addCompanyRequest = function (request, response) {
     const {
-        dniCoordinador,
         emailCoordinador,
         nombreCoordinador,
         telefonoCoordinador,
@@ -28,22 +27,23 @@ exports.addCompanyRequest = function (request, response) {
         direccionLugarTrabajo,
         metodosTransporte,
         fechaPeticion,
-        specialities
+        specialities,
+        url
     } = request.body;
 
     const query = `
-    INSERT INTO AuxiliarEmpresa (dniCoordinador, emailCoordinador, nombreCoordinador, telefonoCoordinador,
+    INSERT INTO AuxiliarEmpresa (emailCoordinador, nombreCoordinador, telefonoCoordinador,
                                 razonSocial, cif, telEmpresa, dirRazSocial, provincia, municipio, cpRazSoc,
                                 responsableLegal, cargo, dni, descripcionPuesto, direccionLugarTrabajo,
                                 metodosTransporte, fechaPeticion, especialidadYCantAlumnos) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = {
-        dniCoordinador, emailCoordinador, nombreCoordinador, telefonoCoordinador,
-        razonSocial, cif, telEmpresa, dirRazSocial, provincia, municipio, cpRazSoc,
-        responsableLegal, cargo, dniRl, descripcionPuesto, direccionLugarTrabajo,
-        metodosTransporte, fechaPeticion, specialities
+        emailCoordinador, nombreCoordinador, telefonoCoordinador, razonSocial, cif, 
+        telEmpresa, dirRazSocial, provincia, municipio, cpRazSoc, responsableLegal, 
+        cargo, dniRl, descripcionPuesto, direccionLugarTrabajo, metodosTransporte, 
+        fechaPeticion, specialities
     };
 
     connection.query(query, Object.values(values), async (err, result) => {
@@ -55,8 +55,9 @@ exports.addCompanyRequest = function (request, response) {
         const specialitiesCodes = await recibirNombres(values.specialities);
         const convenioDocxPath = await editarConvenio(values, specialitiesCodes);
         const convenioPdfPath = await docxToPdf(convenioDocxPath);
+        const idGenerado = await generarId(result.insertId);
 
-        mandarMail(values, convenioPdfPath);
+        mandarMail(values, convenioPdfPath, idGenerado, url);
 
         response.status(201).json("Solicitud de empresa añadida correctamente");
     });
@@ -96,7 +97,7 @@ async function editarConvenio(values, specialitiesCodes) {
         // ubicadas dentro de data (cualquier instancia de "cargo", por ejemplo).
         // cmdDelimiter permite que solo recoja las instancias de las palabras que
         // se encuentren dentro de nuestros delimitadores escogidos (['<<', '>>'], 
-        // por ejemplo "<<cargo>>" si se reconocería).
+        // por ejemplo "<<cargo>>" se reconocerá).
         const buffer = await createReport({
             template: fs.readFileSync(templatePath),
             data: {
@@ -126,6 +127,7 @@ function docxToPdf(docxPath) {
     return new Promise((resolve, reject) => {
         const libreOfficeCommand = `soffice --headless --convert-to pdf --outdir "${path.dirname(docxPath)}" "${docxPath}"`;
 
+        // Ejecutamos el comando de libreOffice para la conversión.
         exec(libreOfficeCommand, (error, stdout, stderr) => {
             if (error) {
                 console.error('Error al convertir a PDF:', stderr);
@@ -136,16 +138,16 @@ function docxToPdf(docxPath) {
             const pdfPath = docxPath.replace(/\.docx$/, '.pdf');
 
             // Comprobar que el archivo .pdf existe antes de borrar el .docx.
-            fs.access(pdfPath, fs.constants.F_OK, (err) => {
-                if (err) {
+            fs.access(pdfPath, fs.constants.F_OK, (error2) => {
+                if (error2) {
                     console.error('PDF no encontrado tras la conversión');
                     return reject(new Error('PDF no generado'));
                 }
 
                 // Eliminar el archivo .docx.
-                fs.unlink(docxPath, (unlinkErr) => {
-                    if (unlinkErr) {
-                        console.warn('No se pudo eliminar el archivo .docx:', unlinkErr.message);
+                fs.unlink(docxPath, (error3) => {
+                    if (error3) {
+                        console.warn('No se pudo eliminar el archivo .docx:', error3.message);
                     }
                     resolve(pdfPath);
                 });
@@ -154,7 +156,12 @@ function docxToPdf(docxPath) {
     });
 }
 
-async function mandarMail(values, convenioPath){
+async function generarId(insertId) {
+    const letras = 'QRBMUHPWACKZFJLVDXSYIGTNOE';
+    return insertId * 23 + letras[insertId % 26];
+}
+
+async function mandarMail(values, convenioPath, idGenerado, host){
     const mail = {
             from: `"Salesianos Zaragoza" <${process.env.EMAIL_USER}>`,
             to: values.emailCoordinador,
@@ -162,7 +169,9 @@ async function mandarMail(values, convenioPath){
             html: `
             <p>Buenos días, le enviamos este correo para informarle de que la formalización de la documentación para participar
             en el programa de Formación Profesional Dual ha sido recibida correctamente.</p>
-            <p>Si desea participar, por favor envíe el siguiente documento firmado a x@gmail.com antes del 15 de febrero.</p>
+            <p>Si desea participar, por favor cargue el siguiente documento firmado aquí: ${host}/addConvenio/${idGenerado} antes del 15 de febrero.</p>
+            <p>IMPORTANTE!</p>
+            <p>Si recibe un error de seguridad, es porque debe modificar la ruta de https:// a http://</p>
             `,
             attachments: [
             {
