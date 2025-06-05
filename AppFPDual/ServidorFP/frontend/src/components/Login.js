@@ -1,52 +1,59 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles.css'; // Importa el archivo de estilos CSS global
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { useUser } from '../globales/User';
 
 const Login = () => {
-    const [Username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const history = useNavigate();
+    const { setUser } = useUser(); // Nos hará falta para establecer el usuario.
 
-    const Auth = async (e) => {
-        e.preventDefault();
+    // Función para enviar el email al backend tras el login exitoso
+    const handleOAuthSuccess = async (credentialResponse) => {
         try {
-            const bodyParameters = {
-                'name': Username,
-                'password': password
-            };
-            const options = {
+            // Decodifica el token JWT para obtener el email (puedes usar jwt-decode)
+            const decodedToken = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+            const userEmail = decodedToken.email;
+
+            // Envía el email al backend
+            const response = await fetch("/getUserByEmail", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bodyParameters)
-            };
-            const response = await fetch("/getUserByName", options);
-            if (!response.ok) {
-                throw new Error('Error en la solicitud');
-            }else{
-                history("/Home");
+                body: JSON.stringify({ email: userEmail }),
+            });
+
+            if (response.ok) {
+                setUser({ 
+                    nombre: response.name,
+                    email: userEmail,
+                });
+                history("/");
+            } else {
+                throw new Error('Usuario no autorizado');
             }
         } catch (error) {
-            console.error('Error al autenticar:', error);
-            let div = document.getElementById("error");
-            div.style.visibility = "visible";
+            console.error('Error en OAuth:', error);
+            document.getElementById("error").style.visibility = "visible";
         }
+    };
+
+    const handleOAuthError = () => {
+        console.error('Error en el login con Google');
+        document.getElementById("error").style.visibility = "visible";
     };
 
     return (
         <div className="backgroundlogin"> {/* Aplica la clase backgroundlogin */}
             <div className="content"> {/* Aplica la clase content */}
                 <div className="form-container"> {/* Aplica la clase form-container */}
-                    <form onSubmit={Auth} className="login-form"> {/* Aplica la clase login-form */}
+                    <div className="login-form">
                         <h2>GESTOR DE FP</h2>
-                        <label>Username</label>
-                        <input type="text" placeholder="Username" value={Username} onChange={(e) => setUsername(e.target.value)} />
-                        <label className="label">Password</label>
-                        <input type="password" placeholder="******" value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button>Login</button>
+                        <GoogleOAuthProvider clientId="791547102279-74v5rl4flrgun24og9roreds7t6euqbc.apps.googleusercontent.com">
+                            <GoogleLogin onSuccess={handleOAuthSuccess} onError={handleOAuthError} useOneTap/>
+                        </GoogleOAuthProvider>
                         <div id="error" style={{ visibility: "hidden" }}>
-                            <p>Contraseña o usuario equivocado, prueba de nuevo</p>
+                            <p>Error al iniciar sesión. Inténtalo de nuevo.</p>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

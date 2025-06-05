@@ -1,32 +1,37 @@
 const { connection } = require("../db/config");
 const bcrypt = require("bcrypt");
 
-// Usuario por nombre
-exports.getUserByName = function (request, response) {
-    connection.query("SELECT * FROM users WHERE name = ?",
-        [request.body.name], 
+// Usuario por email
+exports.getUserByEmail = function (request, response) {
+    connection.query("SELECT * FROM users WHERE email = ?",
+        [request.body.email], 
     (error, results) => {
         if(error)
             throw error;
+        if(results == null) return res.status(400).json({msg: "User not found"});
         response.status(200).json(results);
-        if(results == null || request.body.password == null) return res.status(400).json({msg: "User not found"});
-        const match = bcrypt.compareSync(request.body.password, results[0].hash);
-        console.log(match);
-        if( match ) return res.status(400).json({msg: "Wrong Password"});
     });
 };
 
 // Insertar usuarios
 exports.addUser = function (request, response) {
     const name = request.body.name;
-    const password = request.body.password;
-    const salt = bcrypt.genSaltSync(20);
-    const hashPassword = bcrypt.hashSync(password, salt);
-    connection.query("INSERT INTO users(name, password, hash) VALUES (?, ?, ?)",
-        [name, hashPassword, salt],
+    const email = request.body.email;
+    connection.query("INSERT INTO users(name, email) VALUES (?, ?)",
+        [name, email],
         (error, results) => {
-            if(error) throw error;
-            response.status(201).json("Item añadido correctamente");
+            if (error) {
+                console.error("Error al insertar el usuario:", error);
+                return response.status(500).json({ error: "Error al crear el usuario" });
+            }
+
+            addCourses(results.insertId, request.body.specialities);
+
+            response.status(201).json("Usuario añadido correctamente");
         }
     );
 };
+
+function addCourses(id, specialities){
+
+}
