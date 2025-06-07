@@ -19,6 +19,11 @@ function Header() {
                         />
                         <span className="fs-4 fw-bold">GESTOR DE FP DUAL</span>
                     </Link>
+                    {user && (
+                        <div>
+                            <span className="navbar-text fw-bold text-white">Bienvenido {user.nombre} {user.specialities}</span>
+                        </div>
+                    )}
                     <div className="collapse navbar-collapse justify-content-end">
                         <ul className="navbar-nav">
                             {location !== '/' && (
@@ -36,20 +41,22 @@ function Header() {
                                 <Link to="/addCompanyRequest" className="nav-link fw-bold text-white">EMPRESAS</Link>
                             </li>
                             )}
-                            {location !== '/linkStudents' && (
+                            {user && location !== '/linkStudents' && (
                             <li className="nav-item">
                                 <Link to="/linkStudents" className="nav-link fw-bold text-white">ENLAZAR</Link>
                             </li>
                             )}
-                            {user && (
-                                <li className="nav-item">
-                                    <span className="nav-link fw-bold text-white">{user.email}</span>
-                                </li>
-                            )}
-                            {location !== '/login' && (
+                            {user && location !== '/login' && (
                                 <li className="nav-item">
                                     <button onClick={() => logout(navigate)} className="nav-link fw-bold" style={{ background: 'none', border: 'none' }}>
                                         LOGOUT
+                                    </button>
+                                </li>
+                            )}
+                            {!user && location !== '/login' && (
+                                <li className="nav-item">
+                                    <button onClick={() => logout(navigate)} className="nav-link fw-bold" style={{ background: 'none', border: 'none' }}>
+                                        LOGIN
                                     </button>
                                 </li>
                             )}

@@ -3,14 +3,26 @@ const bcrypt = require("bcrypt");
 
 // Usuario por email
 exports.getUserByEmail = function (request, response) {
-    connection.query("SELECT * FROM users WHERE email = ?",
-        [request.body.email], 
-    (error, results) => {
-        if(error)
-            throw error;
-        if(results == null) return res.status(400).json({msg: "User not found"});
-        response.status(200).json(results);
-    });
+    const query = `
+                    SELECT u.*, JSON_ARRAYAGG(uc.idCourse) AS specialities 
+                    FROM users u 
+                    LEFT JOIN userscourses uc 
+                    ON u.idUser = uc.idUser 
+                    WHERE u.email = ? 
+                    GROUP BY u.idUser
+                `;
+    const values = [request.body.email];
+
+    console.log(values);
+
+    connection.query( query, values, 
+        (error, results) => {
+            if(error)
+                throw error;
+            if(results == null || results[0] == null) 
+                return response.status(400).json({msg: "User not found"});
+            response.status(200).json(results[0]);
+        });
 };
 
 // Insertar usuarios
@@ -33,5 +45,16 @@ exports.addUser = function (request, response) {
 };
 
 function addCourses(id, specialities){
+    const values = specialities.map(specialityId => [id, specialityId]);
+    
+    connection.query("INSERT INTO userscourses (idUser, idCourse) VALUES (?)",
+        [values],
+        (error, results) => {
+            if (error) {
+                console.error("Error al añadir las especialidades del usuario", error);
+            }
 
+            console.log("Especialidades del usuario añadidas correctamente");
+        }
+    );
 }

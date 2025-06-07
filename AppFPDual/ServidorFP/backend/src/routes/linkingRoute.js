@@ -3,7 +3,7 @@ const router = Router();
 
 const LinkingService = require('../services/linkingService.js');
 
-router.get("/linkStudents", LinkingService.showStudentRequests);
+router.post("/linkStudents", LinkingService.showStudentRequests);
 
 // Rutas para blobs
 router.get('/linkStudents/:id/cv', LinkingService.getCvDoc);

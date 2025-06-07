@@ -1,20 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback  } from "react";
+import { useUser } from '../globales/User';
+import { useNavigate } from 'react-router-dom';
 
 const LinkStudents = () => {
+    const { user } = useUser(); // Obtiene el usuario del contexto
+    const navigate = useNavigate(); // Para mandar a login si no hay usuario
     const [requests, setRequests] = useState([]);
-    const [showBlob, setShowBlob] = useState(null);
-    const [currentBlobUrl, setCurrentBlobUrl] = useState(null);
+    const [showDoc, setShowDoc] = useState(null);
+    const [currentDocUrl, setCurrentDocUrl] = useState(null);
 
-    // ----------------------------------------------------------------   USE EFFECTS
-    useEffect(() => {
-        LinkStudents();
-    }, []);
-
-    // -----------------------------------------------------------------   GETS
-    // 
+    // El useCallback debe declararse antes del useEffect para que funcione.
+    // esto se usa para que en el hipotético de que user.specialities cambiase
+    // la función se volviese a ejecutar.
     // Recoge todos los datos de un join de tablas y los guarda en requests
-    function LinkStudents() {
-        fetch('/linkStudents') // Hacer una solicitud HTTP GET a '/linkStudents'
+    const LinkStudents = useCallback(() => {
+        const bodyParameters = {
+            'specialities': user.specialities,
+        };
+        // Configurar las opciones para la solicitud fetch
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+        };
+
+        fetch('/linkStudents', options) // Hacer una solicitud HTTP GET a '/linkStudents'
         .then(response => response.json()) // Convertir la respuesta a JSON
         .then(requests => {
             setRequests(requests); // Establecer los datos obtenidos en el estado 'requests'
@@ -23,9 +35,21 @@ const LinkStudents = () => {
         .catch(error => {
             console.error('Error fetching requests data:', error);
         });
-    }
+    }, [user.specialities]);
 
-    const fetchBlob = (idGestion, tipo) => {
+    // ----------------------------------------------------------------   USE EFFECTS
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+        LinkStudents();
+    }, [user, navigate, LinkStudents]);
+
+    // -----------------------------------------------------------------   GETS
+    // 
+
+    // Esta funcion saca el documento elegido de la gestión escogida. 
+    const getDoc = (idGestion, tipo) => {
         let route = '';
         switch (tipo) {
             case 'cv':
@@ -47,12 +71,13 @@ const LinkStudents = () => {
             return res.blob();
         })
         .then(blob => {
-            if (currentBlobUrl) {
-                URL.revokeObjectURL(currentBlobUrl);
+            // Si ya tenemos un documento almacenado lo eliminamos
+            if (currentDocUrl) {
+                URL.revokeObjectURL(currentDocUrl);
             }
             const url = URL.createObjectURL(blob);
-            setCurrentBlobUrl(url);
-            setShowBlob({ tipo, url, nombre: `${tipo.toUpperCase()} - ${idGestion}`,
+            setCurrentDocUrl(url);
+            setShowDoc({ tipo, url, nombre: `${tipo.toUpperCase()} - ${idGestion}`,
                 nombreAlumno: requests.find(r => r.idGestion === idGestion)?.nombre || ''});
         })
         .catch(err => {
@@ -60,19 +85,20 @@ const LinkStudents = () => {
         });
     };
 
-    const closeBlobViewer = () => {
-        if (currentBlobUrl) {
-            URL.revokeObjectURL(currentBlobUrl);
-            setCurrentBlobUrl(null);
+    // Función para cerrar el visualizador de docs.
+    const closeDocViewer = () => {
+        if (currentDocUrl) {
+            URL.revokeObjectURL(currentDocUrl);
+            setCurrentDocUrl(null);
         }
-        setShowBlob(null);
+        setShowDoc(null);
     };
 
     // Función para validar el documento.
     const validateDoc = () => {
-        const idGestion = showBlob.nombre.split(' - ')[1];
-        fetch(`/linkStudents/${idGestion}/${showBlob.tipo}/validate`);
-        closeBlobViewer();
+        const idGestion = showDoc.nombre.split(' - ')[1];
+        fetch(`/linkStudents/${idGestion}/${showDoc.tipo}/validate`);
+        closeDocViewer();
         LinkStudents();
     };
 
@@ -87,7 +113,9 @@ const LinkStudents = () => {
                                 <h3 className="card-title font-medium text-lg">
                                     {r.nombre} ({r.dni})
                                 </h3>
-                                <span className={`badge ${r.descEstado === 'Aprobado' ? 'bg-success' : r.descEstado === 'Rechazado' ? 'bg-danger' : 'bg-warning'} text-white px-2 py-1 rounded text-xs`}>
+                                <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
+                                        r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                        r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                     {r.fechaFormalizacion}
                                 </span>
                             </div>
@@ -101,7 +129,9 @@ const LinkStudents = () => {
                                         <p className="text-sm text-muted mb-0">Empresa</p>
                                         <p>{r.em1 || "—"}</p>
                                     </div>
-                                    <span className={`badge ${r.est1 === 'Aprobado' ? 'bg-success' : r.est1 === 'Rechazado' ? 'bg-danger' : 'bg-warning'} text-white px-2 py-1 rounded text-xs`}>
+                                    <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
+                                            r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                            r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                         {r.est1}
                                     </span>
                                 </div>
@@ -119,13 +149,13 @@ const LinkStudents = () => {
                                     <div>
                                         <p className="text-sm text-muted mb-0">Documentos:</p>
                                         <div className="flex gap-2">
-                                            <button onClick={() => fetchBlob(r.idGestion, 'cv')} className="btn btn-sm btn-primary me-2">
+                                            <button onClick={() => getDoc(r.idGestion, 'cv')} className="btn btn-sm btn-primary me-2">
                                                 Ver CV
                                             </button>
-                                            <button onClick={() => fetchBlob(r.idGestion, 'anexo2')} className="btn btn-sm btn-primary me-2">
+                                            <button onClick={() => getDoc(r.idGestion, 'anexo2')} className="btn btn-sm btn-primary me-2">
                                                 Ver Anexo 2
                                             </button>
-                                            <button onClick={() => fetchBlob(r.idGestion, 'anexo3')} className="btn btn-sm btn-primary">
+                                            <button onClick={() => getDoc(r.idGestion, 'anexo3')} className="btn btn-sm btn-primary">
                                                 Ver Anexo 3
                                             </button>
                                         </div>
@@ -151,34 +181,34 @@ const LinkStudents = () => {
                     </div>
                 ))}
             </div>
-            {showBlob && (
+            {showDoc && (
                 <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-                        onClick={closeBlobViewer}>
+                        onClick={closeDocViewer}>
                     <div className="modal-dialog modal-xl" style={{ maxWidth: '90%', height: '90vh' }} 
                             onClick={e => e.stopPropagation()}>
                         <div className="modal-content h-100">
                             <div className="modal-header">
                             <h5 className="modal-title">
-                                {showBlob.nombreAlumno} - {showBlob.nombre}
+                                {showDoc.nombreAlumno} - {showDoc.nombre}
                             </h5>
                             <div className="ms-auto">
-                                {(showBlob.tipo === 'anexo2' || showBlob.tipo === 'anexo3') && (
+                                {(showDoc.tipo === 'anexo2' || showDoc.tipo === 'anexo3') && (
                                     <button onClick={validateDoc} className="btn btn-success me-2">
                                         Validar
                                     </button>
                                 )}
-                                <button onClick={() => window.open(showBlob.url, '_blank')} className="btn btn-success me-2">
+                                <button onClick={() => window.open(showDoc.url, '_blank')} className="btn btn-success me-2">
                                     Abrir en nueva pestaña
                                 </button>
-                                <button type="button" className="btn-close" onClick={closeBlobViewer}></button>
+                                <button type="button" className="btn-close" onClick={closeDocViewer}></button>
                             </div>
                             </div>
                             <div className="modal-body p-0" style={{ height: 'calc(100% - 56px)' }}>
-                                <iframe src={showBlob.url} title={`Documento de ${showBlob.nombreAlumno}`} width="100%" 
+                                <iframe src={showDoc.url} title={`Documento de ${showDoc.nombreAlumno}`} width="100%" 
                                     height="100%"style={{ border: 'none' }}>
                                     <p>
                                         Tu navegador no soporta la visualización de PDFs. 
-                                        <a href={showBlob.url} download>Descarga el documento</a> 
+                                        <a href={showDoc.url} download>Descarga el documento</a> 
                                         para verlo.
                                     </p>
                                 </iframe>

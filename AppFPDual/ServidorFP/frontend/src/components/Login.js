@@ -22,9 +22,12 @@ const Login = () => {
             });
 
             if (response.ok) {
+                const userData = await response.json();
+                console.log(response);
                 setUser({ 
-                    nombre: response.name,
+                    nombre: userData.name,
                     email: userEmail,
+                    specialities: userData.specialities
                 });
                 history("/");
             } else {

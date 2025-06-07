@@ -2,11 +2,13 @@ const { connection } = require("../db/config");
 
 // MOSTRAR TODAS LAS PETICIONES HECHAS POR ALUMNOS
 exports.showStudentRequests = function (request, response) {
-    const sql = `
+    const specialities = request.body.specialities;
+
+    let sql = `
     SELECT g.idGestion, a.nombre, a.dni, es.nombreEsp, g.anexo2FirmadoRecibido, e.idEvaluacion, e.notaMedia, 
-	em1.empresa as em1, est1.descEstado as est1, t1.nombreTipo as tipo1, g.observaciones1 as obv1,
-    em2.empresa as em2, est2.descEstado as est2, t2.nombreTipo as tipo2, g.observaciones2 as obv2, 
-    em3.empresa as em3, est3.descEstado as est3, t3.nombreTipo as tipo3, g.observaciones3 as obv3, 
+	em1.empresa as em1, g.estadoDual1 as estid1, est1.descEstado as est1, t1.nombreTipo as tipo1, g.observaciones1 as obv1,
+    em2.empresa as em2, g.estadoDual2 as estid2, est2.descEstado as est2, t2.nombreTipo as tipo2, g.observaciones2 as obv2, 
+    em3.empresa as em3, g.estadoDual3 as estid3, est3.descEstado as est3, t3.nombreTipo as tipo3, g.observaciones3 as obv3, 
 	g.fechaFormalizacion, g.anexo3FirmadoRecibido
     FROM gestiondual g
     JOIN gf_alumnosfct a ON a.idAlumno = g.idAlumno
@@ -33,12 +35,26 @@ exports.showStudentRequests = function (request, response) {
         AND e1.fecha = reciente.ultFecha
     ) e 
     ON e.idAlumno = g.idAlumno AND e.idEspecialidad = g.idEspecialidad
-    ORDER BY g.fechaFormalizacion DESC;
     `;
 
-    connection.query(sql, (error, results) => {
-        if(error)
-            throw error;
+    // Si no es admin (y por tanto tiene especialidades) filtrar por sus
+    // especialidades
+    if (specialities && specialities.length > 0 && specialities[0] !== null) {
+        // Esto añade los ? que correspondan según cuantas especialidades haya.
+        const placeholders = specialities.map(() => '?').join(',');
+        sql += ` WHERE g.idEspecialidad IN (${placeholders})`;
+    }
+
+    // El ORDER BY siempre debe ser lo último de la query.
+    sql += ` ORDER BY g.fechaFormalizacion DESC, es.nombreEsp;`;
+
+    // Como specialities es un array de valores, puedo ponerlo directamente 
+    // donde de normal pondría values.
+    connection.query(sql, specialities, (error, results) => {
+        if(error) {
+            console.error('Error en la consulta:', error);
+            return response.status(500).json({ error: 'Error al obtener las peticiones' });
+        }
         response.status(200).json(results);
     });
 };
