@@ -7,7 +7,8 @@ const LinkStudents = () => {
     const navigate = useNavigate(); // Para mandar a login si no hay usuario
     const [requests, setRequests] = useState([]);
     const [showDoc, setShowDoc] = useState(null);
-    const [currentDocUrl, setCurrentDocUrl] = useState(null);
+    const [currentDocUrl, setCurrentDocUrl] = useState(null); // Para el visualizador de documentos
+    const [expandedCards, setExpandedCards] = useState(new Set()); // Para expandir las cards
 
     // El useCallback debe declararse antes del useEffect para que funcione.
     // esto se usa para que en el hipotético de que user.specialities cambiase
@@ -47,7 +48,6 @@ const LinkStudents = () => {
 
     // -----------------------------------------------------------------   GETS
     // 
-
     // Esta funcion saca el documento elegido de la gestión escogida. 
     const getDoc = (idGestion, tipo) => {
         let route = '';
@@ -85,6 +85,14 @@ const LinkStudents = () => {
         });
     };
 
+    // Esta funcion saca el documento elegido de la gestión escogida. 
+    const getEvaluation = (idEvaluacion) => {
+        if (!idEvaluacion) return;
+        console.log('Tiene evaluacion');
+    };
+
+    // -----------------------------------------------------------------   FUNCTIONS
+    // 
     // Función para cerrar el visualizador de docs.
     const closeDocViewer = () => {
         if (currentDocUrl) {
@@ -95,91 +103,191 @@ const LinkStudents = () => {
     };
 
     // Función para validar el documento.
-    const validateDoc = () => {
+    const validateDoc = async () => {
         const idGestion = showDoc.nombre.split(' - ')[1];
-        fetch(`/linkStudents/${idGestion}/${showDoc.tipo}/validate`);
+        await fetch(`/linkStudents/${idGestion}/${showDoc.tipo}/validate`);
         closeDocViewer();
         LinkStudents();
     };
 
+    // Función para desplegar las cards.
+    const toggleCard = (id) => {
+        const newSet = new Set(expandedCards);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setExpandedCards(newSet);
+    };
+
     return (
-        <div className="p-4 m-5">
-            <h2 className="text-xl font-semibold mb-4">Peticiones de Alumnos</h2>
-            <div className="grid gap-4">
-                {requests.map((r) => (
-                    <div key={r.idGestion} className="card border rounded-lg shadow-sm mb-4">
-                        <div className="card-body p-4">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="card-title font-medium text-lg">
-                                    {r.nombre} ({r.dni})
-                                </h3>
-                                <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
-                                        r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
-                                        r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
-                                    {r.fechaFormalizacion}
-                                </span>
-                            </div>
-                            <div className="row">
-                                <div className="col">
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">Especialidad</p>
+        <div className="container">
+            <div className="row">
+                <h2 className="text-xl font-semibold mb-4 mt-4">Peticiones de Alumnos</h2>
+                <div className="grid gap-4">
+                {requests.map((r) => {
+                    const isExpanded = expandedCards.has(r.idGestion);
+                    return (
+                        <div key={r.idGestion} className="card border rounded-lg shadow-sm mb-4">
+                            <div className="card-body p-4 position-relative">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="card-title font-medium text-lg">
+                                            {r.nombre} ({r.dni})
+                                        </h3>
                                         <p>{r.nombreEsp}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">Empresa</p>
-                                        <p>{r.em1 || "—"}</p>
-                                    </div>
-                                    <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
-                                            r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
-                                            r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
-                                        {r.est1}
-                                    </span>
-                                </div>
-                                <div className="col">
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">Tipo Contrato</p>
-                                        <p>{r.tipo1}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">Nota Media</p>
-                                        <p>{r.notaMedia !== null ? r.notaMedia.toFixed(2) : "—"}</p>
-                                    </div>
-                                </div>
-                                <div className="col">
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">Documentos:</p>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => getDoc(r.idGestion, 'cv')} className="btn btn-sm btn-primary me-2">
-                                                Ver CV
-                                            </button>
-                                            <button onClick={() => getDoc(r.idGestion, 'anexo2')} className="btn btn-sm btn-primary me-2">
-                                                Ver Anexo 2
-                                            </button>
-                                            <button onClick={() => getDoc(r.idGestion, 'anexo3')} className="btn btn-sm btn-primary">
-                                                Ver Anexo 3
-                                            </button>
+                                    <div className="row mt-3">
+                                        <div className="col">
+                                            {r.em1 && (
+                                            <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
+                                                r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                                r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 1: {r.em1}
+                                            </span>
+                                            )}
+                                        </div>
+                                        <div className="col">
+                                            {r.em2 && (
+                                            <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' :
+                                                r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
+                                                r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 2: {r.em2}
+                                            </span>
+                                            )}
+                                        </div>
+                                        <div className="col">
+                                            {r.em3 && (
+                                            <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' :
+                                                r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
+                                                r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 3: {r.em3}
+                                            </span>
+                                            )}
                                         </div>
                                     </div>
+                                    <button onClick={() => toggleCard(r.idGestion)} 
+                                        className="btn btn-sm btn-outline-secondary position-absolute"
+                                        style={{ top: '16px', right: '16px', minWidth: '32px', minHeight: '32px', zIndex: 1 }}>
+                                        {isExpanded ? '▲' : '▼'}
+                                    </button>
+                                </div>
+                                {isExpanded && (
                                     <div>
-                                        <p className="text-sm text-muted mb-0">Firmados:</p>
-                                        <div className="flex gap-2">
-                                            <span>A2: {r.anexo2FirmadoRecibido ? "✅" : "❌"}</span>
-                                            <span>A3: {r.anexo3FirmadoRecibido ? "✅" : "❌"}</span>
+                                        <div className="row mt-3">
+                                            <div className="col-4">
+                                                <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
+                                                    r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                                    r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                    {r.est1}
+                                                </span>
+                                                {r.tipo1 && (
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0 mt-2">Tipo Contrato</p>
+                                                    <p>{r.tipo1}</p>
+                                                </div>
+                                                )}
+                                                {r.obv1 && (
+                                                <div className="md:col-span-2 lg:col-span-4 mt-3">
+                                                    <p className="text-sm text-muted mb-0">Observaciones</p>
+                                                    <p className="text-sm">{r.obv1}</p>
+                                                </div>
+                                                )}
+                                            </div>
+                                            <div className="col-4">
+                                                {r.est2 && (
+                                                <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' :
+                                                    r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
+                                                    r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                    {r.est2}
+                                                </span>
+                                                )}
+                                                {r.tipo2 && (
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0 mt-2">Tipo Contrato</p>
+                                                    <p>{r.tipo2}</p>
+                                                </div>
+                                                )}
+                                                {r.obv2 && (
+                                                <div className="md:col-span-2 lg:col-span-4 mt-3">
+                                                    <p className="text-sm text-muted mb-0">Observaciones</p>
+                                                    <p className="text-sm">{r.obv2}</p>
+                                                </div>
+                                                )}
+                                            </div>
+                                            <div className="col-4">
+                                                {r.est3 && (
+                                                <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' :
+                                                    r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
+                                                    r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                    {r.est3}
+                                                </span>
+                                                )}
+                                                {r.tipo3 && (
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0 mt-2">Tipo Contrato</p>
+                                                    <p>{r.tipo3}</p>
+                                                </div>
+                                                )}
+                                                {r.obv3 && (
+                                                <div className="md:col-span-2 lg:col-span-4 mt-3">
+                                                    <p className="text-sm text-muted mb-0">Observaciones</p>
+                                                    <p className="text-sm">{r.obv3}</p>
+                                                </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-4">
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0">Documentos:</p>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => getDoc(r.idGestion, 'cv')} className="btn btn-sm btn-primary me-2">
+                                                            Ver CV
+                                                        </button>
+                                                        <button onClick={() => getDoc(r.idGestion, 'anexo2')} className="btn btn-sm btn-primary me-2">
+                                                            Ver Anexo 2
+                                                        </button>
+                                                        <button onClick={() => getDoc(r.idGestion, 'anexo3')} className="btn btn-sm btn-primary">
+                                                            Ver Anexo 3
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0">Firmados:</p>
+                                                    <div className="flex gap-2">
+                                                        <span>A2: {r.anexo2FirmadoRecibido ? "✅" : "❌"}</span>
+                                                        <span>A3: {r.anexo3FirmadoRecibido ? "✅" : "❌"}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="col-4">
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0">Evaluación</p>
+                                                    <button onClick={() => getEvaluation(r.idEvaluacion)} className="btn btn-sm btn-primary">
+                                                        {r.idEvaluacion !== null ? "Ver" : "Evaluar"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="col-4">
+                                                {r.notaMedia && (
+                                                <div>
+                                                    <p className="text-sm text-muted mb-0">Nota Media</p>
+                                                    <p>{r.notaMedia !== null ? r.notaMedia.toFixed(2) : "—"}</p>
+                                                </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-muted mb-0">ID Evaluación</p>
-                                        <p>{r.idEvaluacion || "—"}</p>
-                                    </div>
-                                </div>
-                                <div className="md:col-span-2 lg:col-span-4">
-                                    <p className="text-sm text-muted mb-0">Observaciones</p>
-                                    <p className="text-sm">{r.obv1 || "Sin observaciones"}</p>
-                                </div>
+                                )}
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             {showDoc && (
                 <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
@@ -191,17 +299,17 @@ const LinkStudents = () => {
                             <h5 className="modal-title">
                                 {showDoc.nombreAlumno} - {showDoc.nombre}
                             </h5>
-                            <div className="ms-auto">
-                                {(showDoc.tipo === 'anexo2' || showDoc.tipo === 'anexo3') && (
-                                    <button onClick={validateDoc} className="btn btn-success me-2">
-                                        Validar
+                                <div className="ms-auto">
+                                    {(showDoc.tipo === 'anexo2' || showDoc.tipo === 'anexo3') && (
+                                        <button onClick={validateDoc} className="btn btn-success me-2">
+                                            Validar
+                                        </button>
+                                    )}
+                                    <button onClick={() => window.open(showDoc.url, '_blank')} className="btn btn-success me-2">
+                                        Abrir en nueva pestaña
                                     </button>
-                                )}
-                                <button onClick={() => window.open(showDoc.url, '_blank')} className="btn btn-success me-2">
-                                    Abrir en nueva pestaña
-                                </button>
-                                <button type="button" className="btn-close" onClick={closeDocViewer}></button>
-                            </div>
+                                    <button type="button" className="btn-close" onClick={closeDocViewer}></button>
+                                </div>
                             </div>
                             <div className="modal-body p-0" style={{ height: 'calc(100% - 56px)' }}>
                                 <iframe src={showDoc.url} title={`Documento de ${showDoc.nombreAlumno}`} width="100%" 
@@ -216,8 +324,9 @@ const LinkStudents = () => {
                         </div>
                     </div>
                 </div>
-            )}
+                )}
         </div>
+    </div>
     );
 };
 

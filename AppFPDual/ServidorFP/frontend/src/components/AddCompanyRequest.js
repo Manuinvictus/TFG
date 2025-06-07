@@ -8,6 +8,8 @@ const AddCompanyRequest = () => {
   const [dataSpecialities, setDataSpecialities] = useState([]);
   // Para cargar los posibles transportes 
   const [dataTransports, setDataTransports] = useState([]);
+  // Para evitar multiples envíos seguidos
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Campos form
   const [emailCoordinador, setEmailCoordinador] = useState('');
   const [nombreCoordinador, setNombreCoordinador] = useState('');
@@ -172,6 +174,9 @@ const AddCompanyRequest = () => {
 
 // --------------------------------------------------------------------------  EJECUCIONES
   const buttonAddCompanyRequest = async () => {
+    // Si hay petición en proceso, evita que mande otra.
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     if (!formRef.current.checkValidity()) {
       formRef.current.reportValidity();
       return;
@@ -202,7 +207,7 @@ const AddCompanyRequest = () => {
         return;
       }
     }
-    AddCompanyRequest();
+    await AddCompanyRequest();
   };
 
   const AddCompanyRequest = async () => {
@@ -243,10 +248,12 @@ const AddCompanyRequest = () => {
       const jsonResponse = await response.json();
       console.log(JSON.stringify(jsonResponse));
       setSuccessMessage("La petición se ha añadido correctamente.");
+      setIsSubmitting(false);
       await wait(5000);
       setSuccessMessage(null);
     } catch (error) {
       console.error('Error:', error.message);
+      setIsSubmitting(false);
     }
   }
 
@@ -417,7 +424,10 @@ const AddCompanyRequest = () => {
             </div>
           </div>
         </div>
-        <button type="button" className="btn btn-danger mb-3" onClick={buttonAddCompanyRequest}>Enviar</button>
+        <button type="button" className={isSubmitting ? "btn btn-disabled mb-3" : "btn btn-danger mb-3"} onClick={buttonAddCompanyRequest} 
+              disabled={isSubmitting}>
+            {isSubmitting ? "Procesando..." : "Enviar solicitud"}
+        </button>
         {successMessage && (
           <div className="alert alert-success mt-3" role="alert">
             {successMessage}

@@ -9,7 +9,7 @@ exports.showStudentRequests = function (request, response) {
 	em1.empresa as em1, g.estadoDual1 as estid1, est1.descEstado as est1, t1.nombreTipo as tipo1, g.observaciones1 as obv1,
     em2.empresa as em2, g.estadoDual2 as estid2, est2.descEstado as est2, t2.nombreTipo as tipo2, g.observaciones2 as obv2, 
     em3.empresa as em3, g.estadoDual3 as estid3, est3.descEstado as est3, t3.nombreTipo as tipo3, g.observaciones3 as obv3, 
-	g.fechaFormalizacion, g.anexo3FirmadoRecibido
+	g.fechaFormalizacion, g.fechaPeticion, g.anexo3FirmadoRecibido
     FROM gestiondual g
     JOIN gf_alumnosfct a ON a.idAlumno = g.idAlumno
     LEFT JOIN ge_empresas em1 ON em1.idempresa = g.idEmpresa1
@@ -22,19 +22,7 @@ exports.showStudentRequests = function (request, response) {
     LEFT JOIN tipocontrato t2 ON g.tipoContrato2 = t2.idContrato
     LEFT JOIN tipocontrato t3 ON g.tipoContrato3 = t3.idContrato
     JOIN especialidad es ON g.idEspecialidad = es.idEspecialidad
-    LEFT JOIN (
-        SELECT e1.*
-        FROM evaluacion e1
-        INNER JOIN (
-            SELECT e2.idAlumno, e2.idEspecialidad, MAX(e2.fecha) AS ultFecha
-            FROM evaluacion e2
-            GROUP BY e2.idAlumno, e2.idEspecialidad
-        ) reciente
-        ON e1.idAlumno = reciente.idAlumno 
-        AND e1.idEspecialidad = reciente.idEspecialidad 
-        AND e1.fecha = reciente.ultFecha
-    ) e 
-    ON e.idAlumno = g.idAlumno AND e.idEspecialidad = g.idEspecialidad
+    LEFT JOIN evaluacion e ON g.idEvaluacion = e.idEvaluacion
     `;
 
     // Si no es admin (y por tanto tiene especialidades) filtrar por sus
@@ -46,7 +34,7 @@ exports.showStudentRequests = function (request, response) {
     }
 
     // El ORDER BY siempre debe ser lo último de la query.
-    sql += ` ORDER BY g.fechaFormalizacion DESC, es.nombreEsp;`;
+    sql += ` ORDER BY g.fechaPeticion DESC, es.nombreEsp;`;
 
     // Como specialities es un array de valores, puedo ponerlo directamente 
     // donde de normal pondría values.
