@@ -15,6 +15,9 @@ const LinkStudents = () => {
     // la función se volviese a ejecutar.
     // Recoge todos los datos de un join de tablas y los guarda en requests
     const LinkStudents = useCallback(() => {
+        if (!user) {
+            navigate('/login');
+        }
         const bodyParameters = {
             'specialities': user.specialities,
         };
@@ -36,15 +39,12 @@ const LinkStudents = () => {
         .catch(error => {
             console.error('Error fetching requests data:', error);
         });
-    }, [user.specialities]);
+    }, [user, navigate]);
 
     // ----------------------------------------------------------------   USE EFFECTS
     useEffect(() => {
-        if (!user) {
-            navigate('/login');
-        }
         LinkStudents();
-    }, [user, navigate, LinkStudents]);
+    }, [LinkStudents]);
 
     // -----------------------------------------------------------------   GETS
     // 
@@ -86,9 +86,10 @@ const LinkStudents = () => {
     };
 
     // Esta funcion saca el documento elegido de la gestión escogida. 
-    const getEvaluation = (idEvaluacion) => {
-        if (!idEvaluacion) return;
-        console.log('Tiene evaluacion');
+    const getEvaluation = (idGestion) => {
+        if (!idGestion) navigate(`/evaluate/0`);
+        const letras = 'QRBMUHPWACKZFJLVDXSYIGTNOE';
+        navigate(`/evaluate/${idGestion * 23 + letras[idGestion % 26]}`);
     };
 
     // -----------------------------------------------------------------   FUNCTIONS
@@ -268,16 +269,16 @@ const LinkStudents = () => {
                                             <div className="col-4">
                                                 <div>
                                                     <p className="text-sm text-muted mb-0">Evaluación</p>
-                                                    <button onClick={() => getEvaluation(r.idEvaluacion)} className="btn btn-sm btn-primary">
+                                                    <button onClick={() => getEvaluation(r.idGestion)} className="btn btn-sm btn-primary">
                                                         {r.idEvaluacion !== null ? "Ver" : "Evaluar"}
                                                     </button>
                                                 </div>
                                             </div>
                                             <div className="col-4">
-                                                {r.notaMedia && (
+                                                {r.notaTotal && (
                                                 <div>
-                                                    <p className="text-sm text-muted mb-0">Nota Media</p>
-                                                    <p>{r.notaMedia !== null ? r.notaMedia.toFixed(2) : "—"}</p>
+                                                    <p className="text-sm text-muted mb-0">Nota Total</p>
+                                                    <p>{r.notaTotal !== null ? r.notaTotal.toFixed(2) : "—"}</p>
                                                 </div>
                                                 )}
                                             </div>

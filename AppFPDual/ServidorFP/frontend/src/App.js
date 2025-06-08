@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 import AddDualStudent from "./components/AddDualStudent";
 import AddCompanyRequest from "./components/AddCompanyRequest";
 import AddConvenio from "./components/AddConvenio";
+import Evaluation from "./components/Evaluation";
 import LinkStudents from "./components/LinkStudents";
 import Login from "./components/Login";
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/addDualStudent" element={<><Header/><AddDualStudent/><Footer/></>} /> 
             <Route path="/addCompanyRequest" element={<><Header/><AddCompanyRequest/><Footer/></>} />
             <Route path="/addConvenio/:id" element={<><Header/><AddConvenio/><Footer/></>} />
+            <Route path="/evaluate/:id" element={<><Header/><Evaluation/><Footer/></>} />
             <Route path="/linkStudents" element={<><Header/><LinkStudents/><Footer/></>} />
           </Routes>
         </BrowserRouter>

@@ -10,7 +10,7 @@ exports.getAllPreferences = function (request, response) {
     });
 };
 
-// LISTAR PREFERENCIAS
+// LISTAR PREFERENCIAS POR ESPECIALIDAD 
 exports.getPreferencesBySpeciality = function (request, response) {
     const idSpeciality = request.body.idSpeciality;
     connection.query("SELECT * FROM preferencia WHERE idEspecialidad = (?)",

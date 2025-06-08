@@ -192,7 +192,7 @@ async function mandarMail(values, convenioPath, idGenerado, host){
 // INSERTAR EL CONVENIO FIRMADO POR UNA EMPRESA QUE QUIERE PARTICIPAR EN EL PROGRAMA DUAL.
 exports.addConvenio = function (request, response) {
     //El id viene alterado para dificultar que se pueda acceder a la ruta 
-    const id = request.params.id / 23;
+    const id = request.params.id.slice(0, -1) / 23;
     const convenio = request.file;
 
     // Leer el archivo y convertirlo a un formato que se pueda almacenar en la base de datos (blob)

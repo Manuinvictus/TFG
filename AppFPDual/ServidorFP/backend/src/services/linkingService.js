@@ -5,7 +5,7 @@ exports.showStudentRequests = function (request, response) {
     const specialities = request.body.specialities;
 
     let sql = `
-    SELECT g.idGestion, a.nombre, a.dni, es.nombreEsp, g.anexo2FirmadoRecibido, e.idEvaluacion, e.notaMedia, 
+    SELECT g.idGestion, a.nombre, a.dni, es.nombreEsp, g.anexo2FirmadoRecibido, e.idEvaluacion, e.notaTotal, 
 	em1.empresa as em1, g.estadoDual1 as estid1, est1.descEstado as est1, t1.nombreTipo as tipo1, g.observaciones1 as obv1,
     em2.empresa as em2, g.estadoDual2 as estid2, est2.descEstado as est2, t2.nombreTipo as tipo2, g.observaciones2 as obv2, 
     em3.empresa as em3, g.estadoDual3 as estid3, est3.descEstado as est3, t3.nombreTipo as tipo3, g.observaciones3 as obv3, 

@@ -7,14 +7,14 @@ function AddConvenio() {
     const [file, setFile] = useState(null);
 
     useEffect(() => {
-    const numero = id.slice(0, -1)
-    const letraControl = id.slice(-1);
-    const letras = 'QRBMUHPWACKZFJLVDXSYIGTNOE';
+        const numero = id.slice(0, -1)
+        const letraControl = id.slice(-1);
+        const letras = 'QRBMUHPWACKZFJLVDXSYIGTNOE';
         if (numero % 23 !== 0) {
-            navigate('/home');
+            navigate('/');
         } else{
             if (letraControl !== letras[(numero / 23) % 26]) {
-                navigate('/home');
+                navigate('/');
             }
         }
     }, [id, navigate]);

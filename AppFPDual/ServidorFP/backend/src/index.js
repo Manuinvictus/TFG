@@ -15,6 +15,7 @@ app.use(require('./routes/specialitiesRoute'));
 app.use(require('./routes/possibleTransportsRoute.js'));
 app.use(require('./routes/dualStudentsRoute'));
 app.use(require('./routes/companyRequestRoute'));
+app.use(require('./routes/evaluationsRoute'));
 app.use(require('./routes/linkingRoute'));
 
 
