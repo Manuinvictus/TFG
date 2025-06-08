@@ -9,6 +9,7 @@ const LinkStudents = () => {
     const [showDoc, setShowDoc] = useState(null);
     const [currentDocUrl, setCurrentDocUrl] = useState(null); // Para el visualizador de documentos
     const [expandedCards, setExpandedCards] = useState(new Set()); // Para expandir las cards
+    const [sendingInfo, setSendingInfo] = useState(new Set()); // Para evitar múltiples envíos
 
     // El useCallback debe declararse antes del useEffect para que funcione.
     // esto se usa para que en el hipotético de que user.specialities cambiase
@@ -124,24 +125,40 @@ const LinkStudents = () => {
 
     // Función para enviar la información de los alumnos a las empresas.
     const sendInfo = async (idGestion, idAlumno, idEmpresa) => {
-        const url = window.location.origin;
-        const bodyParameters = {
-            'idGestion': idGestion,
-            'idAlumno': idAlumno,
-            'idEmpresa': idEmpresa,
-            'url': url,
-        };
-        // Configurar las opciones para la solicitud fetch
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
-        };
-        await fetch("/sendMail", options);
-        console.log('recargamos');
-        LinkStudents();
+        // Crear un identificador único para este botón
+        const buttonId = `${idGestion}-${idEmpresa}`
+        // Si ya se está enviando información con este botón, no hacer nada
+        if (sendingInfo.has(buttonId)) return;
+        // Añadir el botón al array de botones en proceso
+        setSendingInfo(prev => new Set([...prev, buttonId]));
+        try {
+            const url = window.location.origin;
+            const bodyParameters = {
+                'idGestion': idGestion,
+                'idAlumno': idAlumno,
+                'idEmpresa': idEmpresa,
+                'url': url,
+            };
+            // Configurar las opciones para la solicitud fetch
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+            };
+            await fetch("/sendMail", options);
+            LinkStudents();
+        } catch (error) {
+            console.error('Error sending info:', error);
+        } finally {
+            // Eliminar el botón del array de botones en proceso
+            setSendingInfo(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(buttonId);
+                return newSet;
+            });
+        }
     }
 
     return (
@@ -207,8 +224,11 @@ const LinkStudents = () => {
                                                     {r.est1}
                                                 </span>
                                                 {user.specialities[0] == null && r.estid1 === 1 && (
-                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa1)} className="btn btn-sm btn-primary mt-2">
-                                                        Enviar información a la empresa.
+                                                    <button 
+                                                        onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa1)} 
+                                                        className={sendingInfo.has(`${r.idGestion}-1`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
+                                                        disabled={sendingInfo.has(`${r.idGestion}-1`)}>
+                                                        {sendingInfo.has(`${r.idGestion}-1`) ? "Enviando..." : "Enviar información a la empresa."}
                                                     </button>
                                                 )}
                                                 {r.tipo1 && (
@@ -234,8 +254,11 @@ const LinkStudents = () => {
                                                 </span>
                                                 )}
                                                 {user.specialities[0] == null && r.estid2 === 1 && (
-                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa2)} className="btn btn-sm btn-primary mt-2">
-                                                        Enviar información a la empresa.
+                                                    <button 
+                                                        onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa2)} 
+                                                        className={sendingInfo.has(`${r.idGestion}-2`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
+                                                        disabled={sendingInfo.has(`${r.idGestion}-2`)}>
+                                                        {sendingInfo.has(`${r.idGestion}-2`) ? "Enviando..." : "Enviar información a la empresa."}
                                                     </button>
                                                 )}
                                                 {r.tipo2 && (
@@ -261,8 +284,11 @@ const LinkStudents = () => {
                                                 </span>
                                                 )}
                                                 {user.specialities[0] == null && r.estid3 === 1 && (
-                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa3)} className="btn btn-sm btn-primary mt-2">
-                                                        Enviar información a la empresa.
+                                                    <button 
+                                                        onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa3)} 
+                                                        className={sendingInfo.has(`${r.idGestion}-3`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
+                                                        disabled={sendingInfo.has(`${r.idGestion}-3`)}>
+                                                        {sendingInfo.has(`${r.idGestion}-3`) ? "Enviando..." : "Enviar información a la empresa."}
                                                     </button>
                                                 )}
                                                 {r.tipo3 && (

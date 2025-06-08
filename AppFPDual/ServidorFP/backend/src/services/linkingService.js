@@ -88,9 +88,13 @@ exports.sendMail = function(request, response) {
                 const correoAnexos = results3[0].correoAnexos;
                 const empresa = results3[0].empresa;
 
-                await mandarMail(correoAnexos, cv, empresa, nombreAlumno, idEmpresa, idAlumno, request.body.url);
-
-                response.status(201).json("Datos enviados correctamente");
+                try {
+                    await mandarMail(correoAnexos, cv, empresa, nombreAlumno, idEmpresa, idAlumno, request.body.url);
+                    response.status(201).json("Datos enviados correctamente");
+                } catch (error) {
+                    console.error('Error en mandarMail:', error);
+                    response.status(500).json("Error al enviar el correo");
+                }
             });
         });
     });
@@ -103,52 +107,60 @@ async function generarId(insertId) {
 
 async function mandarMail(correoAnexos, cv, empresa, nombreAlumno, idEmpresa, idAlumno, host){
     const mail = {
-            from: `"Salesianos Zaragoza" <${process.env.EMAIL_USER}>`,
-            to: correoAnexos,
-            subject: `Alumno seleccionado para ${empresa} - DUAL`,
-            html: `
-            <p>Buenos días, le enviamos este correo para informarle de que desde Salesianos hemos considerado que ${nombreAlumno} será 
-            una buena opción para trabajar con ustedes.</p>
-            <p>Adjuntamos en este correo su CV, para que puedan proceder a contactar con él y realizar el proceso de selección pertinente.</p>
-            <p>Si deciden acoger a ${nombreAlumno} como parte de su equipo, rellenen el siguiente formulario: 
-            ${host}/confirmStudent/${await generarId(idEmpresa)}/${await generarId(idAlumno)} antes del 15 de febrero.</p>
-            <p>En caso contrario, porfavor notifiquenlo en este otro lo antes posible: 
-            ${host}/denyStudent/${await generarId(idEmpresa)}/${await generarId(idAlumno)}</p>
-            <p>IMPORTANTE!</p>
-            <p>Si recibe un error de seguridad, es porque debe modificar la ruta de https:// a http://</p>
-            `,
-            attachments: [
-                {
-                    filename: 'CV_' + nombreAlumno + '_' + new Date().getFullYear() + '.pdf',
-                    content: cv, 
-                    contentType: 'application/pdf'
-                },
-            ],
-        };
-    transporter.sendMail(mail, (err, info) => {
-        if (err) {
-            console.error('Error al enviar el correo:', err);
-        } else {
-            console.log('Correo enviado:', info.response);
+        from: `"Salesianos Zaragoza" <${process.env.EMAIL_USER}>`,
+        to: correoAnexos,
+        subject: `Alumno seleccionado para ${empresa} - DUAL`,
+        html: `
+        <p>Buenos días, le enviamos este correo para informarle de que desde Salesianos hemos considerado que ${nombreAlumno} será 
+        una buena opción para trabajar con ustedes.</p>
+        <p>Adjuntamos en este correo su CV, para que puedan proceder a contactar con él y realizar el proceso de selección pertinente.</p>
+        <p>Si deciden acoger a ${nombreAlumno} como parte de su equipo, rellenen el siguiente formulario: 
+        ${host}/confirmStudent/${await generarId(idEmpresa)}/${await generarId(idAlumno)} antes del 15 de febrero.</p>
+        <p>En caso contrario, porfavor notifiquenlo en este otro lo antes posible: 
+        ${host}/denyStudent/${await generarId(idEmpresa)}/${await generarId(idAlumno)}</p>
+        <p>IMPORTANTE!</p>
+        <p>Si recibe un error de seguridad, es porque debe modificar la ruta de https:// a http://</p>
+        `,
+        attachments: [
+            {
+                filename: 'CV_' + nombreAlumno + '_' + new Date().getFullYear() + '.pdf',
+                content: cv, 
+                contentType: 'application/pdf'
+            },
+        ],
+    };
 
-            const query = `
-                UPDATE GestionDual
-                SET estadoDual1 = CASE WHEN idEmpresa1 = ? THEN 2 ELSE estadoDual1 END,
-                    estadoDual2 = CASE WHEN idEmpresa2 = ? THEN 2 ELSE estadoDual2 END,
-                    estadoDual3 = CASE WHEN idEmpresa3 = ? THEN 2 ELSE estadoDual3 END
-                WHERE ? IN (idEmpresa1, idEmpresa2, idEmpresa3)
-                AND idAlumno = ?
-                `;
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mail, (err, info) => {
+            if (err) {
+                console.error('Error al enviar el correo:', err);
+                reject(err);
+            } else {
+                console.log('Correo enviado:', info.response);
+                console.log(idEmpresa);
+                
+                const query = `
+                    UPDATE GestionDual
+                    SET estadoDual1 = CASE WHEN idEmpresa1 = ? THEN 2 ELSE estadoDual1 END,
+                        estadoDual2 = CASE WHEN idEmpresa2 = ? THEN 2 ELSE estadoDual2 END,
+                        estadoDual3 = CASE WHEN idEmpresa3 = ? THEN 2 ELSE estadoDual3 END
+                    WHERE (idEmpresa1 = ? OR idEmpresa2 = ? OR idEmpresa3 = ?)
+                    AND idAlumno = ?
+                    `;
 
-            console.log(idEmpresa);
-            
-            const values = [idEmpresa, idEmpresa, idEmpresa, idEmpresa, idAlumno];
+                const values = [idEmpresa, idEmpresa, idEmpresa, idEmpresa, idEmpresa, idEmpresa, idAlumno];
 
-            connection.query(query, values, (error, results) => {
-                if(error)
-                    throw error;
-            });
-        }
+                connection.query(query, values, (error, results) => {
+                    if(error) {
+                        console.error('Al cambiar el estado de la gestión:', error);
+                        reject(error);
+                    } else {
+                        console.log('Estado de la gestión cambiado');
+                        resolve(results);
+                    }
+                });
+            }
+        });
     });
 }
 
