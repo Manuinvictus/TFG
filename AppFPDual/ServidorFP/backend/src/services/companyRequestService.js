@@ -92,7 +92,9 @@ async function editarConvenio(values, specialitiesCodes) {
     const outputPath = path.join(__dirname, '..', '..', 'uploads', `CONVENIO_${values.razonSocial}_${new Date().getFullYear()}.docx`);
 
     try {
-        // Reemplazar marcadores del convenio
+        // A futuro: 
+        // Este código es 100% reusable para el Anexo3. Cambiar la plantilla y los 
+        // campos a modificar y lo tienes.
         // Importante: Sin cmdDelimiter pillaría cualquier instancia de las palabras
         // ubicadas dentro de data (cualquier instancia de "cargo", por ejemplo).
         // cmdDelimiter permite que solo recoja las instancias de las palabras que
@@ -174,10 +176,10 @@ async function mandarMail(values, convenioPath, idGenerado, host){
             <p>Si recibe un error de seguridad, es porque debe modificar la ruta de https:// a http://</p>
             `,
             attachments: [
-            {
-                filename: 'CONVENIO_' + values.razonSocial + '_' + new Date().getFullYear() + '.pdf',
-                path: convenioPath,
-            },
+                {
+                    filename: 'CONVENIO_' + values.razonSocial + '_' + new Date().getFullYear() + '.pdf',
+                    path: convenioPath,
+                },
             ],
         };
     transporter.sendMail(mail, (err, info) => {

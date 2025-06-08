@@ -66,23 +66,23 @@ const LinkStudents = () => {
         }
 
         fetch(route)
-        .then(res => {
-            if (!res.ok) throw new Error('Error al obtener el documento');
-            return res.blob();
-        })
-        .then(blob => {
-            // Si ya tenemos un documento almacenado lo eliminamos
-            if (currentDocUrl) {
-                URL.revokeObjectURL(currentDocUrl);
-            }
-            const url = URL.createObjectURL(blob);
-            setCurrentDocUrl(url);
-            setShowDoc({ tipo, url, nombre: `${tipo.toUpperCase()} - ${idGestion}`,
-                nombreAlumno: requests.find(r => r.idGestion === idGestion)?.nombre || ''});
-        })
-        .catch(err => {
-            alert(err.message);
-        });
+            .then(res => {
+                if (!res.ok) throw new Error('Error al obtener el documento');
+                return res.blob();
+            })
+            .then(blob => {
+                // Si ya tenemos un documento almacenado lo eliminamos
+                if (currentDocUrl) {
+                    URL.revokeObjectURL(currentDocUrl);
+                }
+                const url = URL.createObjectURL(blob);
+                setCurrentDocUrl(url);
+                setShowDoc({ tipo, url, nombre: `${tipo.toUpperCase()} - ${idGestion}`,
+                    nombreAlumno: requests.find(r => r.idGestion === idGestion)?.nombre || ''});
+            })
+            .catch(err => {
+                alert(err.message);
+            });
     };
 
     // Esta funcion saca el documento elegido de la gestión escogida. 
@@ -121,6 +121,28 @@ const LinkStudents = () => {
         }
         setExpandedCards(newSet);
     };
+
+    // Función para enviar la información de los alumnos a las empresas.
+    const sendInfo = async (idGestion, idAlumno, idEmpresa) => {
+        const url = window.location.origin;
+        const bodyParameters = {
+            'idGestion': idGestion,
+            'idAlumno': idAlumno,
+            'idEmpresa': idEmpresa,
+            'url': url,
+        };
+        // Configurar las opciones para la solicitud fetch
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+        };
+        await fetch("/sendMail", options);
+        console.log('recargamos');
+        LinkStudents();
+    }
 
     return (
         <div className="container">
@@ -184,6 +206,11 @@ const LinkStudents = () => {
                                                     style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
                                                     {r.est1}
                                                 </span>
+                                                {user.specialities[0] == null && r.estid1 === 1 && (
+                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa1)} className="btn btn-sm btn-primary mt-2">
+                                                        Enviar información a la empresa.
+                                                    </button>
+                                                )}
                                                 {r.tipo1 && (
                                                 <div>
                                                     <p className="text-sm text-muted mb-0 mt-2">Tipo Contrato</p>
@@ -206,6 +233,11 @@ const LinkStudents = () => {
                                                     {r.est2}
                                                 </span>
                                                 )}
+                                                {user.specialities[0] == null && r.estid2 === 1 && (
+                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa2)} className="btn btn-sm btn-primary mt-2">
+                                                        Enviar información a la empresa.
+                                                    </button>
+                                                )}
                                                 {r.tipo2 && (
                                                 <div>
                                                     <p className="text-sm text-muted mb-0 mt-2">Tipo Contrato</p>
@@ -227,6 +259,11 @@ const LinkStudents = () => {
                                                     style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
                                                     {r.est3}
                                                 </span>
+                                                )}
+                                                {user.specialities[0] == null && r.estid3 === 1 && (
+                                                    <button onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa3)} className="btn btn-sm btn-primary mt-2">
+                                                        Enviar información a la empresa.
+                                                    </button>
                                                 )}
                                                 {r.tipo3 && (
                                                 <div>
