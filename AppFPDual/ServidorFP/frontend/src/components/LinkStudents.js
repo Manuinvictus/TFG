@@ -11,6 +11,10 @@ const LinkStudents = () => {
     const [currentDocUrl, setCurrentDocUrl] = useState(null); // Para el visualizador de documentos
     const [expandedCards, setExpandedCards] = useState(new Set()); // Para expandir las cards
     const [sendingInfo, setSendingInfo] = useState(new Set()); // Para evitar múltiples envíos
+    // Para gestionar el valor de las empresas que aún no se han asignado definitivamente
+    const [empresa1, setEmpresa1] = useState([]);
+    const [empresa2, setEmpresa2] = useState([]);
+    const [empresa3, setEmpresa3] = useState([]);
 
     // El useCallback debe declararse antes del useEffect para que funcione.
     // esto se usa para que en el hipotético de que user.specialities cambiase
@@ -61,6 +65,22 @@ const LinkStudents = () => {
         .then(response => response.json()) // Convertir la respuesta a JSON
         .then(linkRequests => {
             setLinkRequests(linkRequests); // Establecer los datos obtenidos en el estado 'linkRequests'
+            // Establecer el valor inicial de las empresas de las dropdown
+            setEmpresa1(linkRequests.map(r => ({ 
+                idGestion: r.idGestion, 
+                idEmpresa1: r.idEmpresa1, 
+                em1: r.em1 
+            })));
+            setEmpresa2(linkRequests.map(r => ({ 
+                idGestion: r.idGestion, 
+                idEmpresa2: r.idEmpresa2, 
+                em2: r.em2 
+            })));
+            setEmpresa3(linkRequests.map(r => ({ 
+                idGestion: r.idGestion, 
+                idEmpresa3: r.idEmpresa3, 
+                em3: r.em3 
+            })));
             console.log(linkRequests); // Mostrar el contenido en la consola
         })
         .catch(error => {
@@ -191,6 +211,116 @@ const LinkStudents = () => {
         }
     }
 
+    const handleCompanyChange = (idGestion, array) => (event) => {
+        const idEmpresa = parseInt(event.target.value, 10);
+        // Encontrar la empresa seleccionada en companyRequests para obtener el nombre
+        const selectedCompany = companyRequests.find(cr => cr.idEmpresa === idEmpresa);
+        const nombre = selectedCompany ? selectedCompany.empresa : '';
+        // Actualizar el array correspondiente según el número recibido
+        switch (array) {
+            case 1:
+                setEmpresa1(prev => prev.map(item => 
+                    item.idGestion === idGestion 
+                        ? { ...item, idEmpresa1: idEmpresa, em1: nombre }
+                        : item
+                ));
+                break;
+            case 2:
+                setEmpresa2(prev => prev.map(item => 
+                    item.idGestion === idGestion 
+                        ? { ...item, idEmpresa2: idEmpresa, em2: nombre }
+                        : item
+                ));
+                break;
+            case 3:
+                setEmpresa3(prev => prev.map(item => 
+                    item.idGestion === idGestion 
+                        ? { ...item, idEmpresa3: idEmpresa, em3: nombre }
+                        : item
+                ));
+                break;
+            default:
+                break;
+        }
+    };
+
+    // Función para asignar empresa a un alumno.
+    const assign = async (idGestion, array) => {
+        switch (array) {
+            case 1:
+                const empresa1Data = empresa1.find(item => item.idGestion === idGestion);
+                if (empresa1Data) {
+                    const bodyParameters = {
+                        'idGestion': idGestion,
+                        'idEmpresa': empresa1Data.idEmpresa1
+                    };
+                    // Configurar las opciones para la solicitud fetch
+                    const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+                    };
+                    const response = await fetch("/updateCompany1", options);
+                    if (!response.ok) {
+                        return;
+                    }
+                }
+                GetCompanyRequests();
+                LinkStudents();
+                break;
+            case 2:
+                const empresa2Data = empresa2.find(item => item.idGestion === idGestion);
+                if (empresa2Data) {
+                    const bodyParameters = {
+                        'idGestion': idGestion,
+                        'idEmpresa': empresa2Data.idEmpresa2
+                    };
+                    // Configurar las opciones para la solicitud fetch
+                    const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+                    };
+                    const response = await fetch("/updateCompany2", options);
+                    if (!response.ok) {
+                        return;
+                    }
+                }
+                GetCompanyRequests();
+                LinkStudents();
+                break;
+            case 3:
+                const empresa3Data = empresa3.find(item => item.idGestion === idGestion);
+                if (empresa3Data) {
+                    const bodyParameters = {
+                        'idGestion': idGestion,
+                        'idEmpresa': empresa3Data.idEmpresa3
+                    };
+                    // Configurar las opciones para la solicitud fetch
+                    const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+                    };
+                    const response = await fetch("/updateCompany3", options);
+                    if (!response.ok) {
+                        return;
+                    }
+                }
+                GetCompanyRequests();
+                LinkStudents();
+                break;
+            default:
+                break;
+        }
+    };
+
     return (
         <div className="container">
             <div className="row">
@@ -210,42 +340,75 @@ const LinkStudents = () => {
                                     </div>
                                     <div className="row mt-3">
                                         <div className="col">
-                                            {r.em1 && (r.estid1 === 0 || r.estid1 === 1) && (
-                                            <span className={`badge ${r.estid1 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                            {(!isExpanded || r.estid1 === 2 || r.estid1 === 3 || r.estid1 === 4 || r.estid1 === 5) && (
+                                            <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' : r.estid1 === 2 ? 'bg-primary' : 
+                                                r.estid1 === 3 ? 'bg-danger' : r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 1: {r.em1}
                                             </span>
                                             )}
-                                            {r.em1 && (r.estid1 === 2 || r.estid1 === 3 || r.estid1 === 4 || r.estid1 === 5) && (
-                                            <span className={`badge ${r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
-                                                r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
-                                                EMPRESA 1: {r.em1}
-                                            </span>
+                                            {isExpanded && (r.estid1 === 0 || r.estid1 === 1) && (
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="text-nowrap">EMPRESA 1:</span>
+                                                <select className="form-select form-select-sm" defaultValue={r.idEmpresa1} 
+                                                        onChange={handleCompanyChange(r.idGestion, 1)}>
+                                                    <option value="">Selecciona empresa...</option>
+                                                    {companyRequests.filter(cr => cr.idEspecialidad === r.idEspecialidad)
+                                                        .map(cr => (
+                                                            <option key={cr.idEmpresa} value={cr.idEmpresa}>
+                                                            {cr.empresa} (Disponibilidad: {cr.cantidad})
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            </div>
                                             )}
                                         </div>
                                         <div className="col">
-                                            {r.em2 && (r.estid2 === 0 || r.estid2 === 1) && (
-                                            <span className={`badge ${r.estid2 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                            {(r.em2 && (!isExpanded || r.estid2 === 2 || r.estid2 === 3 || r.estid2 === 4 || r.estid2 === 5)) && (
+                                            <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' : r.estid2 === 2 ? 'bg-primary' : 
+                                                r.estid2 === 3 ? 'bg-danger' : r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 2: {r.em2}
                                             </span>
                                             )}
-                                            {r.em2 && (r.estid2 === 2 || r.estid2 === 3 || r.estid2 === 4 || r.estid2 === 5) && (
-                                            <span className={`badge ${r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
-                                                r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
-                                                EMPRESA 2: {r.em2}
-                                            </span>
+                                            {r.em2 && isExpanded && (r.estid2 === 0 || r.estid2 === 1) && (
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="text-nowrap">EMPRESA 2:</span>
+                                                <select className="form-select form-select-sm" defaultValue={r.idEmpresa2} 
+                                                        onChange={handleCompanyChange(r.idGestion, 2)}>
+                                                    <option value="">Selecciona empresa...</option>
+                                                    {companyRequests.filter(cr => cr.idEspecialidad === r.idEspecialidad)
+                                                        .map(cr => (
+                                                            <option key={cr.idEmpresa} value={cr.idEmpresa}>
+                                                            {cr.empresa} (Disponibilidad: {cr.cantidad})
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            </div>
                                             )}
                                         </div>
                                         <div className="col">
-                                            {r.em3 && (r.estid3 === 0 || r.estid3 === 1) && (
-                                            <span className={`badge ${r.estid3 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                            {(r.em3 && (!isExpanded || r.estid3 === 2 || r.estid3 === 3 || r.estid3 === 4 || r.estid3 === 5)) && (
+                                            <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' : r.estid3 === 2 ? 'bg-primary' : 
+                                                r.estid3 === 3 ? 'bg-danger' : r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 3: {r.em3}
                                             </span>
                                             )}
-                                            {r.em3 && (r.estid3 === 2 || r.estid3 === 3 || r.estid3 === 4 || r.estid3 === 5) && (
-                                            <span className={`badge ${r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
-                                                r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
-                                                EMPRESA 3: {r.em3}
-                                            </span>
+                                            {r.em3 && isExpanded && (r.estid3 === 0 || r.estid3 === 1) && (
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="text-nowrap">EMPRESA 3:</span>
+                                                <select className="form-select form-select-sm" defaultValue={r.idEmpresa3} 
+                                                        onChange={handleCompanyChange(r.idGestion, 3)}>
+                                                    <option value="">Selecciona empresa...</option>
+                                                    {companyRequests.filter(cr => cr.idEspecialidad === r.idEspecialidad)
+                                                        .map(cr => (
+                                                            <option key={cr.idEmpresa} value={cr.idEmpresa}>
+                                                            {cr.empresa} (Disponibilidad: {cr.cantidad})
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            </div>
                                             )}
                                         </div>
                                     </div>
@@ -259,12 +422,21 @@ const LinkStudents = () => {
                                     <div>
                                         <div className="row mt-3">
                                             <div className="col-4">
-                                                <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
-                                                    r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
-                                                    r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
-                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
-                                                    {r.est1}
-                                                </span>
+                                                <div>
+                                                    <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
+                                                        r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                                        r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                        style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                        {r.est1}
+                                                    </span>
+                                                </div>
+                                                {(r.estid1 === 0 || r.estid1 === 1) && (
+                                                <div>
+                                                    <button onClick={() => assign(r.idGestion, 1)} className={"btn btn-sm btn-primary mt-2"}>
+                                                        {r.estid1 === 0 ? "Asignar" : "Reasignar"}
+                                                    </button>
+                                                </div>
+                                                )}
                                                 {user.specialities[0] == null && r.estid1 === 1 && (
                                                     <button 
                                                         onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa1)} 
@@ -288,12 +460,21 @@ const LinkStudents = () => {
                                             </div>
                                             <div className="col-4">
                                                 {r.est2 && (
-                                                <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' :
-                                                    r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
-                                                    r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
-                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
-                                                    {r.est2}
-                                                </span>
+                                                <div>
+                                                    <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' :
+                                                        r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
+                                                        r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                        style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                        {r.est2}
+                                                    </span>
+                                                </div>
+                                                )}
+                                                {(r.estid2 === 0 || r.estid2 === 1) && (
+                                                <div>
+                                                    <button onClick={() => assign(r.idGestion, 2)} className={"btn btn-sm btn-primary mt-2"}>
+                                                        {r.estid2 === 0 ? "Asignar" : "Reasignar"}
+                                                    </button>
+                                                </div>
                                                 )}
                                                 {user.specialities[0] == null && r.estid2 === 1 && (
                                                     <button 
@@ -318,12 +499,21 @@ const LinkStudents = () => {
                                             </div>
                                             <div className="col-4">
                                                 {r.est3 && (
-                                                <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' :
-                                                    r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
-                                                    r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
-                                                    style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
-                                                    {r.est3}
-                                                </span>
+                                                <div>
+                                                    <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' :
+                                                        r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
+                                                        r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}
+                                                        style={{wordWrap: 'break-word', whiteSpace: 'normal', display: 'inline-block'}}>
+                                                        {r.est3}
+                                                    </span>
+                                                </div>
+                                                )}
+                                                {(r.estid3 === 0 || r.estid3 === 1) && (
+                                                <div>
+                                                    <button onClick={() => assign(r.idGestion, 3)} className={"btn btn-sm btn-primary mt-2"}>
+                                                        {r.estid3 === 0 ? "Asignar" : "Reasignar"}
+                                                    </button>
+                                                </div>
                                                 )}
                                                 {user.specialities[0] == null && r.estid3 === 1 && (
                                                     <button 

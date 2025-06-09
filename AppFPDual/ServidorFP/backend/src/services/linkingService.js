@@ -6,7 +6,7 @@ exports.showStudentRequests = function (request, response) {
     const specialities = request.body.specialities;
 
     let query = `
-        SELECT g.idGestion, g.idAlumno, a.nombre, a.dni, es.nombreEsp, g.anexo2FirmadoRecibido, e.idEvaluacion, e.notaTotal, 
+        SELECT g.idGestion, g.idAlumno, a.nombre, a.dni, g.idEspecialidad, es.nombreEsp, g.anexo2FirmadoRecibido, e.idEvaluacion, e.notaTotal, 
         g.idEmpresa1, em1.empresa as em1, g.estadoDual1 as estid1, est1.descEstado as est1, t1.nombreTipo as tipo1, g.observaciones1 as obv1,
         g.idEmpresa2, em2.empresa as em2, g.estadoDual2 as estid2, est2.descEstado as est2, t2.nombreTipo as tipo2, g.observaciones2 as obv2, 
         g.idEmpresa3, em3.empresa as em3, g.estadoDual3 as estid3, est3.descEstado as est3, t3.nombreTipo as tipo3, g.observaciones3 as obv3, 
@@ -196,6 +196,102 @@ exports.getCompanyRequests = function (request, response) {
             return response.status(500).json({ error: 'Error al obtener las peticiones' });
         }
         response.status(200).json(results);
+    });
+};
+
+// ACTUALIZAR EL CAMPO EMPRESA1
+exports.updateCompany1 = function(request, response) {
+    const idGestion = request.body.idGestion;
+    const idEmpresa = request.body.idEmpresa;
+
+    const query = `
+        UPDATE GestionDual 
+        SET idEmpresa1 = ?, estadoDual1 = 1 
+        WHERE idGestion = ?
+    `;
+
+    connection.query(query, [idEmpresa, idGestion], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar empresa1:', error);
+            return response.status(500).json({ 
+                error: 'Error interno del servidor' 
+            });
+        }
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ 
+                error: 'No se encontró el registro especificado' 
+            });
+        }
+
+        response.json({ 
+            success: true, 
+            message: 'Registro actualizado correctamente'
+        });
+    });
+};
+
+// ACTUALIZAR EL CAMPO EMPRESA2
+exports.updateCompany2 = function(request, response) {
+    const idGestion = request.body.idGestion;
+    const idEmpresa = request.body.idEmpresa;
+
+    const query = `
+        UPDATE GestionDual 
+        SET idEmpresa2 = ?, estadoDual2 = 1 
+        WHERE idGestion = ?
+    `;
+
+    connection.query(query, [idEmpresa, idGestion], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar empresa2:', error);
+            return response.status(500).json({ 
+                error: 'Error interno del servidor' 
+            });
+        }
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ 
+                error: 'No se encontró el registro especificado' 
+            });
+        }
+
+        response.json({ 
+            success: true, 
+            message: 'Registro actualizado correctamente'
+        });
+    });
+};
+
+// ACTUALIZAR EL CAMPO EMPRESA3
+exports.updateCompany3 = function(request, response) {
+    const idGestion = request.body.idGestion;
+    const idEmpresa = request.body.idEmpresa;
+
+    const query = `
+        UPDATE GestionDual 
+        SET idEmpresa3 = ?, estadoDual3 = 1 
+        WHERE idGestion = ?
+    `;
+
+    connection.query(query, [idEmpresa, idGestion], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar empresa3:', error);
+            return response.status(500).json({ 
+                error: 'Error interno del servidor' 
+            });
+        }
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ 
+                error: 'No se encontró el registro especificado' 
+            });
+        }
+
+        response.json({ 
+            success: true, 
+            message: 'Registro actualizado correctamente'
+        });
     });
 };
 
