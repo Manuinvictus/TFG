@@ -5,6 +5,7 @@ const LinkingService = require('../services/linkingService.js');
 
 router.post("/linkStudents", LinkingService.showStudentRequests);
 router.post("/sendMail", LinkingService.sendMail);
+router.post("/getCompanyRequests", LinkingService.getCompanyRequests);
 
 // Rutas para blobs
 router.get('/linkStudents/:id/cv', LinkingService.getCvDoc);

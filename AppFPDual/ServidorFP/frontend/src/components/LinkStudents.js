@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 const LinkStudents = () => {
     const { user } = useUser(); // Obtiene el usuario del contexto
     const navigate = useNavigate(); // Para mandar a login si no hay usuario
-    const [requests, setRequests] = useState([]);
+    const [linkRequests, setLinkRequests] = useState([]);
+    const [companyRequests, setCompanyRequests] = useState([]);
     const [showDoc, setShowDoc] = useState(null);
     const [currentDocUrl, setCurrentDocUrl] = useState(null); // Para el visualizador de documentos
     const [expandedCards, setExpandedCards] = useState(new Set()); // Para expandir las cards
@@ -14,11 +15,36 @@ const LinkStudents = () => {
     // El useCallback debe declararse antes del useEffect para que funcione.
     // esto se usa para que en el hipotético de que user.specialities cambiase
     // la función se volviese a ejecutar.
-    // Recoge todos los datos de un join de tablas y los guarda en requests
+
+    // Esta funcion recuepra las peticiones que ha hecho cada empresa de las 
+    // distintas especialidades.
+    // Solo recupera las pertinentes para el usuario que ha entrado.
+    const GetCompanyRequests = useCallback(() => {
+        const bodyParameters = {
+            'specialities': user.specialities,
+        };
+        // Configurar las opciones para la solicitud fetch
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyParameters) // Convertir el objeto a JSON
+        };
+
+        fetch('/getCompanyRequests', options) // Hacer una solicitud HTTP GET a '/getCompanyRequests'
+        .then(response => response.json()) // Convertir la respuesta a JSON
+        .then(companyRequests => {
+            setCompanyRequests(companyRequests); // Establecer los datos obtenidos en el estado 'companyRequests'
+            console.log(companyRequests); // Mostrar el contenido en la consola
+        })
+        .catch(error => {
+            console.error('Error fetching linkRequests data:', error);
+        });
+    }, [user.specialities]);
+
+    // Recoge todos los datos de un join de tablas y los guarda en linkRequests
     const LinkStudents = useCallback(() => {
-        if (!user) {
-            navigate('/login');
-        }
         const bodyParameters = {
             'specialities': user.specialities,
         };
@@ -33,19 +59,23 @@ const LinkStudents = () => {
 
         fetch('/linkStudents', options) // Hacer una solicitud HTTP GET a '/linkStudents'
         .then(response => response.json()) // Convertir la respuesta a JSON
-        .then(requests => {
-            setRequests(requests); // Establecer los datos obtenidos en el estado 'requests'
-            console.log(requests); // Mostrar el contenido en la consola
+        .then(linkRequests => {
+            setLinkRequests(linkRequests); // Establecer los datos obtenidos en el estado 'linkRequests'
+            console.log(linkRequests); // Mostrar el contenido en la consola
         })
         .catch(error => {
-            console.error('Error fetching requests data:', error);
+            console.error('Error fetching linkRequests data:', error);
         });
-    }, [user, navigate]);
+    }, [user.specialities]);
 
     // ----------------------------------------------------------------   USE EFFECTS
     useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+        GetCompanyRequests();
         LinkStudents();
-    }, [LinkStudents]);
+    }, [user, navigate, GetCompanyRequests, LinkStudents]);
 
     // -----------------------------------------------------------------   GETS
     // 
@@ -79,7 +109,7 @@ const LinkStudents = () => {
                 const url = URL.createObjectURL(blob);
                 setCurrentDocUrl(url);
                 setShowDoc({ tipo, url, nombre: `${tipo.toUpperCase()} - ${idGestion}`,
-                    nombreAlumno: requests.find(r => r.idGestion === idGestion)?.nombre || ''});
+                    nombreAlumno: linkRequests.find(r => r.idGestion === idGestion)?.nombre || ''});
             })
             .catch(err => {
                 alert(err.message);
@@ -126,7 +156,7 @@ const LinkStudents = () => {
     // Función para enviar la información de los alumnos a las empresas.
     const sendInfo = async (idGestion, idAlumno, idEmpresa) => {
         // Crear un identificador único para este botón
-        const buttonId = `${idGestion}-${idEmpresa}`
+        const buttonId = `${idGestion}-${idEmpresa}`;
         // Si ya se está enviando información con este botón, no hacer nada
         if (sendingInfo.has(buttonId)) return;
         // Añadir el botón al array de botones en proceso
@@ -166,7 +196,7 @@ const LinkStudents = () => {
             <div className="row">
                 <h2 className="text-xl font-semibold mb-4 mt-4">Peticiones de Alumnos</h2>
                 <div className="grid gap-4">
-                {requests.map((r) => {
+                {linkRequests.map((r) => {
                     const isExpanded = expandedCards.has(r.idGestion);
                     return (
                         <div key={r.idGestion} className="card border rounded-lg shadow-sm mb-4">
@@ -180,27 +210,39 @@ const LinkStudents = () => {
                                     </div>
                                     <div className="row mt-3">
                                         <div className="col">
-                                            {r.em1 && (
-                                            <span className={`badge ${r.estid1 === 0 ? 'bg-info' : r.estid1 === 1 ? 'bg-secondary' :
-                                                r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
+                                            {r.em1 && (r.estid1 === 0 || r.estid1 === 1) && (
+                                            <span className={`badge ${r.estid1 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 1: {r.em1}
+                                            </span>
+                                            )}
+                                            {r.em1 && (r.estid1 === 2 || r.estid1 === 3 || r.estid1 === 4 || r.estid1 === 5) && (
+                                            <span className={`badge ${r.estid1 === 2 ? 'bg-primary' : r.estid1 === 3 ? 'bg-danger' : 
                                                 r.estid1 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 1: {r.em1}
                                             </span>
                                             )}
                                         </div>
                                         <div className="col">
-                                            {r.em2 && (
-                                            <span className={`badge ${r.estid2 === 0 ? 'bg-info' : r.estid2 === 1 ? 'bg-secondary' :
-                                                r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
+                                            {r.em2 && (r.estid2 === 0 || r.estid2 === 1) && (
+                                            <span className={`badge ${r.estid2 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 2: {r.em2}
+                                            </span>
+                                            )}
+                                            {r.em2 && (r.estid2 === 2 || r.estid2 === 3 || r.estid2 === 4 || r.estid2 === 5) && (
+                                            <span className={`badge ${r.estid2 === 2 ? 'bg-primary' : r.estid2 === 3 ? 'bg-danger' : 
                                                 r.estid2 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 2: {r.em2}
                                             </span>
                                             )}
                                         </div>
                                         <div className="col">
-                                            {r.em3 && (
-                                            <span className={`badge ${r.estid3 === 0 ? 'bg-info' : r.estid3 === 1 ? 'bg-secondary' :
-                                                r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
+                                            {r.em3 && (r.estid3 === 0 || r.estid3 === 1) && (
+                                            <span className={`badge ${r.estid3 === 0 ? 'bg-info' : 'bg-secondary'} text-white px-2 py-1 rounded text-xs`}>
+                                                EMPRESA 3: {r.em3}
+                                            </span>
+                                            )}
+                                            {r.em3 && (r.estid3 === 2 || r.estid3 === 3 || r.estid3 === 4 || r.estid3 === 5) && (
+                                            <span className={`badge ${r.estid3 === 2 ? 'bg-primary' : r.estid3 === 3 ? 'bg-danger' : 
                                                 r.estid3 === 4 ? 'bg-warning' : 'bg-success'} text-white px-2 py-1 rounded text-xs`}>
                                                 EMPRESA 3: {r.em3}
                                             </span>

@@ -164,6 +164,41 @@ async function mandarMail(correoAnexos, cv, empresa, nombreAlumno, idEmpresa, id
     });
 }
 
+// MOSTRAR TODAS LAS PETICIONES HECHAS POR LAS EMPRESAS
+exports.getCompanyRequests = function (request, response) {
+    const specialities = request.body.specialities;
+
+    let query = `
+        SELECT p.idEmpresa, e.empresa, a.cantidad, a.idEspecialidad
+        FROM ge_empresas e, peticionempresa p, alumnospedidos a
+        WHERE p.idEmpresa = e.idempresa
+        AND p.idPeticion = a.idPeticion
+        AND p.fecha = (
+            SELECT MAX(p2.fecha)
+            FROM peticionempresa p2
+            WHERE p2.idEmpresa = p.idEmpresa
+        )
+    `;
+
+    // Si no es admin (y por tanto tiene especialidades) filtrar por sus
+    // especialidades
+    if (specialities && specialities.length > 0 && specialities[0] !== null) {
+        // Esto añade los ? que correspondan según cuantas especialidades haya.
+        const placeholders = specialities.map(() => '?').join(',');
+        query += ` AND a.idEspecialidad IN (${placeholders})`;
+    }
+
+    // Como specialities es un array de valores, puedo ponerlo directamente 
+    // donde de normal pondría values.
+    connection.query(query, specialities, (error, results) => {
+        if(error) {
+            console.error('Error en la consulta:', error);
+            return response.status(500).json({ error: 'Error al obtener las peticiones' });
+        }
+        response.status(200).json(results);
+    });
+};
+
 // OBTENER CV POR ID
 exports.getCvDoc = function(request, response) {
     const id = request.params.id;
