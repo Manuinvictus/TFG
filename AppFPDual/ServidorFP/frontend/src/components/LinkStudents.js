@@ -437,7 +437,7 @@ const LinkStudents = () => {
                                                     </button>
                                                 </div>
                                                 )}
-                                                {user.specialities[0] == null && r.estid1 === 1 && (
+                                                {user.specialities[0] == null && r.estid1 === 1 && r.anexo2FirmadoRecibido && (
                                                     <button 
                                                         onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa1)} 
                                                         className={sendingInfo.has(`${r.idGestion}-1`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
@@ -476,7 +476,7 @@ const LinkStudents = () => {
                                                     </button>
                                                 </div>
                                                 )}
-                                                {user.specialities[0] == null && r.estid2 === 1 && (
+                                                {user.specialities[0] == null && r.estid2 === 1 && r.anexo2FirmadoRecibido &&  (
                                                     <button 
                                                         onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa2)} 
                                                         className={sendingInfo.has(`${r.idGestion}-2`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
@@ -515,7 +515,7 @@ const LinkStudents = () => {
                                                     </button>
                                                 </div>
                                                 )}
-                                                {user.specialities[0] == null && r.estid3 === 1 && (
+                                                {user.specialities[0] == null && r.estid3 === 1 && r.anexo2FirmadoRecibido &&  (
                                                     <button 
                                                         onClick={() => sendInfo(r.idGestion, r.idAlumno, r.idEmpresa3)} 
                                                         className={sendingInfo.has(`${r.idGestion}-3`) ? "btn btn-sm btn-disabled mt-2" : "btn btn-sm btn-primary mt-2"}
