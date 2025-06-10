@@ -179,24 +179,28 @@ const AddCompanyRequest = () => {
     setIsSubmitting(true);
     if (!formRef.current.checkValidity()) {
       formRef.current.reportValidity();
+      setIsSubmitting(false);
       return;
     }
     if (!FormatValidation.dniNieValido(dniRl)){
       setSuccessMessage("Formato de DNI/NIE del responsable legal no valido, porfavor revise el campo.");
       await wait(5000);
       setSuccessMessage(null);
+      setIsSubmitting(false);
       return;
     }
     if (!FormatValidation.cifValido(cif)){
       setSuccessMessage("Formato del CIF de la empresa no valido, porfavor revise el campo.");
       await wait(5000);
       setSuccessMessage(null);
+      setIsSubmitting(false);
       return;
     }
     if (specialities.length === 0) {
         setSuccessMessage("Por favor, selecciona al menos un ciclo de grado.");
         await wait(5000);
         setSuccessMessage(null);
+        setIsSubmitting(false);
         return;
     }
     for (let i = 0; i < specialities.length; i++) {
@@ -204,6 +208,7 @@ const AddCompanyRequest = () => {
         setSuccessMessage("Por favor, selecciona al menos un alumno para cada grado escogido.");
         await wait(5000);
         setSuccessMessage(null);
+        setIsSubmitting(false);
         return;
       }
     }
