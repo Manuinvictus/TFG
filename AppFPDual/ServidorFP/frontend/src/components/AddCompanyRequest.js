@@ -183,32 +183,32 @@ const AddCompanyRequest = () => {
       return;
     }
     if (!FormatValidation.dniNieValido(dniRl)){
+      setIsSubmitting(false);
       setSuccessMessage("Formato de DNI/NIE del responsable legal no valido, porfavor revise el campo.");
       await wait(5000);
       setSuccessMessage(null);
-      setIsSubmitting(false);
       return;
     }
     if (!FormatValidation.cifValido(cif)){
+      setIsSubmitting(false);
       setSuccessMessage("Formato del CIF de la empresa no valido, porfavor revise el campo.");
       await wait(5000);
       setSuccessMessage(null);
-      setIsSubmitting(false);
       return;
     }
     if (specialities.length === 0) {
+      setIsSubmitting(false);
         setSuccessMessage("Por favor, selecciona al menos un ciclo de grado.");
         await wait(5000);
         setSuccessMessage(null);
-        setIsSubmitting(false);
         return;
     }
     for (let i = 0; i < specialities.length; i++) {
       if (specialities[1][i] <= 0){
+      setIsSubmitting(false);
         setSuccessMessage("Por favor, selecciona al menos un alumno para cada grado escogido.");
         await wait(5000);
         setSuccessMessage(null);
-        setIsSubmitting(false);
         return;
       }
     }
