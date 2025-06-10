@@ -374,7 +374,7 @@ function AddDualStudentComponent() {
         </div>
         <div className="mb-3">
           <label htmlFor="adress-input" className="form-label">Domicilio:</label>
-          <input type="text" className="form-control" id="adress-input" value={adress} onChange={HandleAdressChange} maxLength={12} required/>
+          <input type="text" className="form-control" id="adress-input" value={adress} onChange={HandleAdressChange} maxLength={50} required/>
         </div>
         <div className="mb-3">
           <label htmlFor="cp-input" className="form-label">Código Postal:</label>
