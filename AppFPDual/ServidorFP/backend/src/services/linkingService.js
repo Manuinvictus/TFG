@@ -35,7 +35,7 @@ exports.showStudentRequests = function (request, response) {
     }
 
     // El ORDER BY siempre debe ser lo último de la query.
-    query += ` ORDER BY g.fechaPeticion DESC, es.nombreEsp;`;
+    query += ` ORDER BY YEAR(g.fechaPeticion) DESC, es.nombreEsp;`;
 
     // Como specialities es un array de valores, puedo ponerlo directamente 
     // donde de normal pondría values.
